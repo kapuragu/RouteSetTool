@@ -17,7 +17,7 @@ namespace RouteSetTool
     }
     public class RouteEvent
     {
-        public RouteEventType EventType;
+        public FoxHash EventType;
 
         public bool IsNodeEvent;
         public RouteAimTargetType AimTargetType;
@@ -33,16 +33,16 @@ namespace RouteSetTool
         public char[] Snippet = new char[4];
         public void Read(BinaryReader reader, Dictionary<uint, string> nameLookupTable, HashIdentifiedDelegate hashIdentifiedCallback, RouteSetVersion version)
         {
-            EventType = new RouteEventType();
+            EventType = new FoxHash(FoxHash.Type.StrCode32);
             EventType.Read(reader, nameLookupTable, hashIdentifiedCallback);
             IsNodeEvent = reader.ReadBoolean();
             AimTargetType = (RouteAimTargetType)reader.ReadByte();
             reader.ReadZeroes(1);
             IsLoop = reader.ReadBoolean();
 
-            var logName = EventType.Name.HashValue.ToString();
-            if (EventType.Name.IsStringKnown)
-                logName = EventType.Name.StringLiteral;
+            var logName = EventType.HashValue.ToString();
+            if (EventType.IsStringKnown)
+                logName = EventType.StringLiteral;
             Console.WriteLine($"@{reader.BaseStream.Position} Event {logName}: Is node event: {IsNodeEvent}, aim type: {AimTargetType}, is loop: {IsLoop}");
 
             Time = reader.ReadUInt16();
@@ -78,10 +78,23 @@ namespace RouteSetTool
             }
             AimTargetTypeParams.Read(reader, nameLookupTable, hashIdentifiedCallback);
 
-            switch (EventType)
+            switch (EventType.HashValue)
             {
                 default:
                     EventTypeParams = new EventTypeParams_Default();
+                    break;
+                case 4019510599: //RelaxedIdleAct
+                case 2973097149: //CautionIdleAct
+                    EventTypeParams = new EventTypeParams_IdleAct();
+                    break;
+                case 804119634: //chase
+                    EventTypeParams = new EventTypeParams_chase();
+                    break;
+                case 3952237029: //Conversation
+                    EventTypeParams = new EventTypeParams_Conversation();
+                    break;
+                case 1536918290: //ConversationIdle
+                    EventTypeParams = new EventTypeParams_ConversationIdle();
                     break;
             }
             EventTypeParams.Read(reader, nameLookupTable, hashIdentifiedCallback);

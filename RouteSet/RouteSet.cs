@@ -313,40 +313,34 @@ namespace RouteSetTool
             {
                 foreach(RouteNode node in route.Nodes)
                 {
-                    RouteEventType moveEventType = new RouteEventType();
 
                     FoxHash newEdgeEvent = new FoxHash(FoxHash.Type.StrCode32);
 
                     foreach(var entry in EventTypeGZtoTPP)
                     {
-                        if (entry.Key.Item1== node.EdgeEvent.EventType.Name.HashValue)
+                        if (entry.Key.Item1== node.EdgeEvent.EventType.HashValue)
                         {
                             newEdgeEvent.HashValue = entry.Value.Item1;
                             newEdgeEvent.StringLiteral = entry.Value.Item2;
-                            Console.WriteLine($"Edge event {node.EdgeEvent.EventType.Name.HashValue} to {entry.Value.Item1}");
+                            Console.WriteLine($"Edge event {node.EdgeEvent.EventType.HashValue} to {entry.Value.Item1}");
 
-                            moveEventType.Name = newEdgeEvent;
-
-                            node.EdgeEvent.EventType = moveEventType;
+                            node.EdgeEvent.EventType = newEdgeEvent;
                         }
                     }
                     foreach(RouteEvent nodeEvent in node.NodeEvents)
                     {
-                        RouteEventType waitEventType = new RouteEventType();
 
                         FoxHash newNodeEvent = new FoxHash(FoxHash.Type.StrCode32);
 
                         foreach (var entry in EventTypeGZtoTPP)
                         {
-                            if (entry.Key.Item1 == nodeEvent.EventType.Name.HashValue)
+                            if (entry.Key.Item1 == nodeEvent.EventType.HashValue)
                             {
                                 newNodeEvent.HashValue = entry.Value.Item1;
                                 newNodeEvent.StringLiteral = entry.Value.Item2;
-                                Console.WriteLine($"Node event {nodeEvent.EventType.Name.HashValue} to {entry.Value.Item1}");
+                                Console.WriteLine($"Node event {nodeEvent.EventType.HashValue} to {entry.Value.Item1}");
 
-                                waitEventType.Name = newNodeEvent;
-
-                                nodeEvent.EventType = waitEventType;
+                                nodeEvent.EventType = newNodeEvent;
                             }
                         }
                     }

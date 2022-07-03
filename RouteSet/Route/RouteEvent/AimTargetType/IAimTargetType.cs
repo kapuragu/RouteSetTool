@@ -42,17 +42,23 @@ namespace RouteSetTool
     }
     public class AimCharacter : IAimTargetType
     {
-        public ulong CharacterName = new ulong(); //ROUTE_AIM_CHARACTER //TODO StrCode64 or CHECK if can be written as str32 (bothersome to add 64)
+        public FoxHash CharacterName; //ROUTE_AIM_CHARACTER //TODO StrCode64 or CHECK if can be written as str32 (bothersome to add 64)
         public void Read(BinaryReader reader, Dictionary<uint, string> nameLookupTable, HashIdentifiedDelegate hashIdentifiedCallback)
         {
-            CharacterName = reader.ReadUInt64();
-            Console.WriteLine($"@{reader.BaseStream.Position} Target character: {CharacterName}");
+            CharacterName = new FoxHash(FoxHash.Type.StrCode32);
+            CharacterName.Read(reader, nameLookupTable, hashIdentifiedCallback);
+            var CharacterName_printString = CharacterName.HashValue.ToString();
+            if (CharacterName.IsStringKnown)
+                CharacterName_printString = CharacterName.StringLiteral;
+            Console.WriteLine($"@{reader.BaseStream.Position} Conversation label: {CharacterName_printString }");
+
+            reader.BaseStream.Position += 4;//ASSUMING strcode64 leftovers here
             reader.ReadZeroes(4 * 2);
         }
         public void Write(BinaryWriter writer)
         {
-            writer.Write(CharacterName);
-            writer.WriteZeroes(4 * 2);
+            writer.Write(CharacterName.HashValue);
+            writer.WriteZeroes(4 * 3);
         }
     }
     public class AimRouteAsSightMovePath : IAimTargetType
