@@ -50,7 +50,10 @@
     <Compile Include="Extensions\Extensions.cs" />
     <Compile Include="Hashing\HashManager.cs" />
     <Compile Include="RouteSet\Route\RouteEvent\AimTargetType\IAimTargetType.cs" />
-    <Compile Include="RouteSet\Route\RouteEvent\RouteEventType.cs" />
+    <Compile Include="RouteSet\Route\RouteEvent\EventTypeParams\EventTypeParams_Conversation.cs" />
+    <Compile Include="RouteSet\Route\RouteEvent\EventTypeParams\EventTypeParams_ConversationIdle.cs" />
+    <Compile Include="RouteSet\Route\RouteEvent\EventTypeParams\EventTypeParams_chase.cs" />
+    <Compile Include="RouteSet\Route\RouteEvent\EventTypeParams\EventTypeParams_IdleAct.cs" />
     <Compile Include="RouteSet\Route\RouteEvent\EventTypeParams\IEventTypeParams.cs" />
     <Compile Include="RouteSet\Route\Node\Vector3.cs" />
     <Compile Include="RouteSet\Route\RouteEvent\RouteEvent.cs" />
