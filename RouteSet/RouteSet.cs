@@ -377,7 +377,7 @@ namespace RouteSetTool
             { new Tuple<uint,string>(1377873783, null), new Tuple<uint,string>(2091872133, "CautionStandIdleReady") },//20070 only use 585050408 HeliEnemyRoute02, non-loop end of long caution walk aim/ready, 
             { new Tuple<uint,string>(1521517928, null), new Tuple<uint,string>(4019510599, "RelaxedIdleAct") },//relaxed node
             { new Tuple<uint,string>(1597064337, null), new Tuple<uint,string>(100777367, "VehicleGetIn") },//enter vehicle
-            { new Tuple<uint,string>(1630004328, null), new Tuple<uint,string>(518500859, "Vanish") },//20020 target/20040 once, escape from mission area, does vanish even work in tpp?
+            { new Tuple<uint,string>(1630004328, null), new Tuple<uint,string>(1654546587, "RideVehicle") },//20020 target/20040 once, was vanish oops, but is 100% a vehicle ride start route
             { new Tuple<uint,string>(1847252103, null), new Tuple<uint,string>(895026164, "UseSearchLight") },//use searchlight
             { new Tuple<uint,string>(2156064302, "SquatIdle"), new Tuple<uint,string>(2951130021, "CautionSquatIdle") },//rip relaxed squat idle
             { new Tuple<uint,string>(2686021750, "Stop"), new Tuple<uint,string>(1974185602, "VehicleIdle") },//vehicle stop
