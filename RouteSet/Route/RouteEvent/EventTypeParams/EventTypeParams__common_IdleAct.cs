@@ -4,12 +4,14 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Xml;
+using System.Xml.Schema;
 
 namespace RouteSetTool
 {
     //RelaxedIdleAct
     //CautionIdleAct
-    public class EventTypeParams_IdleAct : IEventTypeParams
+    public class EventTypeParams__common_IdleAct : IEventTypeParams
     {
         //Animation
         //Known strings:
@@ -30,6 +32,12 @@ namespace RouteSetTool
         //For safety
         public uint Param2;
         public uint Param3;
+
+        public XmlSchema GetSchema()
+        {
+            throw new NotImplementedException();
+        }
+
         public void Read(BinaryReader reader, Dictionary<uint, string> nameLookupTable, HashIdentifiedDelegate hashIdentifiedCallback)
         {
             Animation = new FoxHash(FoxHash.Type.StrCode32);
@@ -48,12 +56,67 @@ namespace RouteSetTool
             Param3 = reader.ReadUInt32();
             Console.WriteLine($"@{reader.BaseStream.Position} Event param3: {Param3}");
         }
+
+        public void ReadXml(XmlReader reader)
+        {
+            reader.ReadStartElement("eventParams__common_hostageVehicle");
+
+            reader.ReadStartElement("message");
+            Animation = new FoxHash(FoxHash.Type.StrCode32);
+            Animation.ReadXmlString(reader);
+            reader.ReadEndElement();
+
+            reader.ReadStartElement("param1");
+            Param1 = 0;
+            uint.TryParse(reader.ReadString(), out Param1);
+            reader.ReadEndElement();
+
+            reader.ReadStartElement("param2");
+            Param2 = 0;
+            uint.TryParse(reader.ReadString(), out Param2);
+            reader.ReadEndElement();
+
+            reader.ReadStartElement("param3");
+            Param3 = 0;
+            uint.TryParse(reader.ReadString(), out Param3);
+            reader.ReadEndElement();
+
+            reader.ReadEndElement();
+        }
+
         public void Write(BinaryWriter writer)
         {
             writer.Write(Animation.HashValue);
             writer.Write(Param1);
             writer.Write(Param2);
             writer.Write(Param3);
+        }
+
+        public void WriteXml(XmlWriter writer)
+        {
+            writer.WriteStartElement("eventParams__common_idleAct");
+
+            writer.WriteStartElement("animation");
+            Animation.WriteXmlString(writer);
+            writer.WriteEndElement();
+
+            writer.WriteStartElement("param1");
+            writer.WriteString(Param1.ToString());
+            writer.WriteEndElement();
+
+            writer.WriteStartElement("param2");
+            writer.WriteString(Param2.ToString());
+            writer.WriteEndElement();
+
+            writer.WriteStartElement("param3");
+            writer.WriteString(Param3.ToString());
+            writer.WriteEndElement();
+
+            writer.WriteEndElement();
+        }
+        public List<FoxHash> GetRouteNames()
+        {
+            return new List<FoxHash>();
         }
     }
 }

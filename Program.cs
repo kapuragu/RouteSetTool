@@ -3,8 +3,10 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
+using System.Xml;
 
 namespace RouteSetTool
 {
@@ -12,27 +14,155 @@ namespace RouteSetTool
     {
         private const string RouteIdDictionary = "route_ids.txt";
         private const string RouteEventDictionary = "route_event_names.txt";
-        private const string RouteEventParamDictionary = "route_event_messages.txt";
+        private const string RouteEventMessageDictionary = "route_event_messages.txt";
+        private const string RouteEventParamDictionary = "route_event_params.txt";
+        private const string RouteIdUserDictionary = "route_ids_user.txt";
+        private const string RouteEventParamUserDictionary = "route_event_messages.txt";
+
+        // -tover 3 e20010_area02.frt
+        private const string ArgToVer = "tover";
+        // -whitelist afgh_sovietBase_enemy.txt f30010.frt
+        private const string ArgWhiteList = "whitelist";
+        // -combine sovietBase_and_south.frt afgh_sovietBase_enemy.frt afgh_sovietSouth_enemy.frt
+        private const string ArgCombine = "combine"; 
         static void Main(string[] args)
         {
             var hashManager = new HashManager();
-            if (File.Exists(RouteIdDictionary))
-                hashManager.StrCode32LookupTable = MakeHashLookupTableFromFile(RouteIdDictionary, FoxHash.Type.StrCode32);
+
+            // Multi-Dictionary Reading!!
+            List<string> dictionaryNames = new List<string>
+            {
+                RouteIdDictionary,
+                RouteEventDictionary,
+                RouteEventMessageDictionary,
+                RouteEventParamDictionary,
+                RouteIdUserDictionary,
+                RouteEventParamUserDictionary,
+            };
+            List<string> strCodeDictionaries = new List<string>();
+            foreach (var dictionaryPath in dictionaryNames)
+                if (File.Exists(GetPathNearApp(dictionaryPath)))
+                    strCodeDictionaries.Add(GetPathNearApp(dictionaryPath));
+
+            hashManager.StrCode32LookupTable = MakeStrCode32HashLookupTableFromFiles(strCodeDictionaries);
 
             List<string> paths = new List<string>();
+
+            var toVerOn = false;
+            var version = 0;
+            var whiteListOn = false;
+            var whiteListName = "";
+            var combineOn = false;
+            var combineName = "";
 
             foreach (string arg in args)
             {
                 if (File.Exists(arg))
                 {
+                    //paths
                     paths.Add(arg);
+                }
+                else
+                {
+                    //arguments
+                    if (toVerOn)
+                    {
+                        int.TryParse(arg, out version);
+                        toVerOn = false;
+                        break;
+                    }
+
+                    if (whiteListOn)
+                    {
+                        if (File.Exists(GetPathNearApp(arg)))
+                        {
+                            whiteListName = GetPathNearApp(arg);
+                        }
+                        break;
+                    }
+
+                    if (combineOn)
+                    {
+                        combineName = arg;
+                        if (Path.GetExtension(combineName)==null)
+                        {
+                            combineName += ".frt";
+                        }
+                        break;
+                    }
+
+                    switch (arg.ToLower())
+                    {
+                        default:
+                            break;
+                        case "-"+ArgToVer:
+                            toVerOn = true;
+                            break;
+                        case "-" + ArgWhiteList:
+                            whiteListOn = true;
+                            break;
+                        case "-" + ArgCombine:
+                            combineOn = true;
+                            break;
+                    }
                 }
             }
 
+            List<Route> totalRouteList = new List<Route>();
+
             foreach (string path in paths)
             {
-                RouteSet frt = ReadFrt(path, hashManager.StrCode32LookupTable, hashManager.OnHashIdentified);
-                var newPath = Path.GetDirectoryName(path) + "/" + Path.GetFileNameWithoutExtension(path) + "_out.frt";
+                if (Path.GetExtension(path)==".frt")
+                {
+                    RouteSet frt = ReadFrt(path, hashManager.StrCode32LookupTable, hashManager.OnHashIdentified);
+                    if (whiteListName != "")
+                    {
+                        frt.WhiteList(GetWhiteList(whiteListName));
+                    }
+
+                    if (combineName != "")
+                    {
+                        foreach (Route route in frt.Routes)
+                            totalRouteList.Add(route);
+                    }
+
+                    if (combineName=="")
+                        WriteXml(frt, Path.GetFileNameWithoutExtension(path) + ".frt.xml");
+                }
+                else if (Path.GetExtension(path)==".xml")
+                {
+                    RouteSet frt = ReadXml(path);
+                    //wip
+                    if (version > 0)
+                    {
+                        switch (version)
+                        {
+                            case (int)RouteSetVersion.GZ:
+                                frt.FileVersion = RouteSetVersion.GZ;
+                                break;
+                            case (int)RouteSetVersion.TPP:
+                                frt.FileVersion = RouteSetVersion.TPP;
+                                break;
+                        }
+                    }
+
+                    if (whiteListName != "")
+                    {
+                        frt.WhiteList(GetWhiteList(whiteListName));
+                    }
+
+                    if (combineName != "")
+                    {
+                        foreach (Route route in frt.Routes)
+                            totalRouteList.Add(route);
+                    }
+
+                    if (combineName == "")
+                        WriteFrt(Path.GetFileNameWithoutExtension(path), frt);
+                }
+
+                /*
+                 * var newPath = Path.GetDirectoryName(path) + "/" + Path.GetFileNameWithoutExtension(path) + "_out.frt";
                 if (frt.FileVersion == RouteSetVersion.TPP)
                     frt.FileVersion = RouteSetVersion.GZ;
                 else
@@ -41,6 +171,12 @@ namespace RouteSetTool
                     frt.EventTypesGzToTpp();
                 }
                 WriteFrt(newPath, frt);
+                */
+            }
+            if (combineName != "")
+            {
+                RouteSet frt = new RouteSet() { Routes = totalRouteList };
+                WriteXml(frt, combineName);
             }
 
             Console.Read();//DEBUG Hold Console
@@ -61,33 +197,89 @@ namespace RouteSetTool
                 frt.Write(writer);
             }
         }
-        private static Dictionary<uint, string> MakeHashLookupTableFromFile(string path, FoxHash.Type hashType)
+        public static void WriteXml(RouteSet frt, string path)
+        {
+            XmlWriterSettings xmlWriterSettings = new XmlWriterSettings()
+            {
+                Encoding = Encoding.UTF8,
+                Indent = true
+            };
+            using (var writer = XmlWriter.Create(path, xmlWriterSettings))
+            {
+                frt.WriteXml(writer);
+            }
+        }
+
+        public static RouteSet ReadXml(string path)
+        {
+            XmlReaderSettings xmlReaderSettings = new XmlReaderSettings
+            {
+                IgnoreWhitespace = true
+            };
+
+            RouteSet frt = new RouteSet();
+            using (var reader = XmlReader.Create(path, xmlReaderSettings))
+            {
+                frt.ReadXml(reader);
+            }
+            return frt;
+        }
+        private static Dictionary<uint, string> MakeStrCode32HashLookupTableFromFiles(List<string> paths)
         {
             ConcurrentDictionary<uint, string> table = new ConcurrentDictionary<uint, string>();
 
             // Read file
             List<string> stringLiterals = new List<string>();
-            using (StreamReader file = new StreamReader(path))
+            foreach (var dictionary in paths)
             {
-                // TODO multi-thread
-                string line;
-                while ((line = file.ReadLine()) != null)
+                using (StreamReader file = new StreamReader(dictionary))
                 {
-                    stringLiterals.Add(line);
+                    // TODO multi-thread
+                    string line;
+                    while ((line = file.ReadLine()) != null)
+                    {
+                        stringLiterals.Add(line);
+                    }
                 }
             }
 
             // Hash entries
             Parallel.ForEach(stringLiterals, (string entry) =>
             {
-                if (hashType == FoxHash.Type.StrCode32)
-                {
-                    uint hash = HashManager.StrCode32(entry);
-                    table.TryAdd(hash, entry);
-                }
+                uint hash = HashManager.StrCode32(entry);
+                table.TryAdd(hash, entry);
             });
 
             return new Dictionary<uint, string>(table);
+        }
+        public static string GetPathNearApp(string name)
+        {
+            return Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) + "/" + name;
+        }
+        public static List<FoxHash> GetWhiteList(string path)
+        {
+            List<FoxHash> whiteList = new List<FoxHash>();
+            using (StreamReader file = new StreamReader(path))
+            {
+                // TODO multi-thread
+                string line;
+                while ((line = file.ReadLine()) != null)
+                {
+                    FoxHash hash = new FoxHash(FoxHash.Type.StrCode32);
+                    if (uint.TryParse(line, out uint maybeHash))
+                    {
+                        hash.HashValue = maybeHash;
+                    }
+                    else
+                    {
+                        hash.StringLiteral = line;
+
+                        hash.HashValue = HashManager.StrCode32(hash.StringLiteral);
+                    }
+                    whiteList.Add(hash);
+                }
+            }
+            return whiteList;
         }
     }
 }

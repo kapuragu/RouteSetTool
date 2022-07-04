@@ -1,21 +1,18 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Xml;
 using System.Xml.Schema;
 
 namespace RouteSetTool
 {
-    //chase
-    public class EventTypeParams_chase : IEventTypeParams
+    //Normal
+    //Heli edge event, opens the door, sets speed, etc.
+    public class EventTypeParams_Normal : IEventTypeParams
     {
-        //first three params are used, fourth one never used
-        public int Param0;
-        public int Param1;
-        public int Param2;
+        public uint Flags;//512=Open right door, 1024=Open left door. Other unknown flags exist
+        public uint Param1;
+        public uint Speed;//~KPM
         public uint Param3;
 
         public XmlSchema GetSchema()
@@ -25,33 +22,33 @@ namespace RouteSetTool
 
         public void Read(BinaryReader reader, Dictionary<uint, string> nameLookupTable, HashIdentifiedDelegate hashIdentifiedCallback)
         {
-            Param0 = reader.ReadInt32();
-            Console.WriteLine($"@{reader.BaseStream.Position} Event param1: {Param0}");
-            Param1 = reader.ReadInt32();
+            Flags = reader.ReadUInt32();
+            Console.WriteLine($"@{reader.BaseStream.Position} Speed: {Flags}");
+            Param1 = reader.ReadUInt32();
             Console.WriteLine($"@{reader.BaseStream.Position} Event param1: {Param1}");
-            Param2 = reader.ReadInt32();
-            Console.WriteLine($"@{reader.BaseStream.Position} Event param2: {Param2}");
+            Speed = reader.ReadUInt32();
+            Console.WriteLine($"@{reader.BaseStream.Position} Event param2: {Speed}");
             Param3 = reader.ReadUInt32();
             Console.WriteLine($"@{reader.BaseStream.Position} Event param3: {Param3}");
         }
 
         public void ReadXml(XmlReader reader)
         {
-            reader.ReadStartElement("eventParams_chase");
+            reader.ReadStartElement("eventParams_Normal");
 
-            reader.ReadStartElement("speed");
-            Param0 = 0;
-            int.TryParse(reader.ReadString(), out Param0);
+            reader.ReadStartElement("flags");
+            Flags = 0;
+            uint.TryParse(reader.ReadString(), out Flags);
             reader.ReadEndElement();
 
             reader.ReadStartElement("param1");
             Param1 = 0;
-            int.TryParse(reader.ReadString(), out Param1);
+            uint.TryParse(reader.ReadString(), out Param1);
             reader.ReadEndElement();
 
-            reader.ReadStartElement("param2");
-            Param2 = 0;
-            int.TryParse(reader.ReadString(), out Param2);
+            reader.ReadStartElement("speed");
+            Speed = 0;
+            uint.TryParse(reader.ReadString(), out Speed);
             reader.ReadEndElement();
 
             reader.ReadStartElement("param3");
@@ -64,26 +61,26 @@ namespace RouteSetTool
 
         public void Write(BinaryWriter writer)
         {
-            writer.Write(Param0);
+            writer.Write(Flags);
             writer.Write(Param1);
-            writer.Write(Param2);
+            writer.Write(Speed);
             writer.Write(Param3);
         }
 
         public void WriteXml(XmlWriter writer)
         {
-            writer.WriteStartElement("eventParams_chase");
+            writer.WriteStartElement("eventParams_Normal");
 
-            writer.WriteStartElement("param0");
-            writer.WriteString(Param0.ToString());
+            writer.WriteStartElement("flags");
+            writer.WriteString(Flags.ToString());
             writer.WriteEndElement();
 
             writer.WriteStartElement("param1");
             writer.WriteString(Param1.ToString());
             writer.WriteEndElement();
 
-            writer.WriteStartElement("param2");
-            writer.WriteString(Param2.ToString());
+            writer.WriteStartElement("speed");
+            writer.WriteString(Speed.ToString());
             writer.WriteEndElement();
 
             writer.WriteStartElement("param3");

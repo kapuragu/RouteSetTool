@@ -4,6 +4,9 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Xml;
+using System.Xml.Schema;
+using System.Xml.Serialization;
 
 namespace RouteSetTool
 {
@@ -12,10 +15,10 @@ namespace RouteSetTool
         GZ = 2,
         TPP = 3,
     }
-    public class RouteSet
+    public class RouteSet : IXmlSerializable
     {
         
-        public RouteSetVersion FileVersion;
+        public RouteSetVersion FileVersion = RouteSetVersion.TPP;
         public List<Route> Routes = new List<Route>();
         public void Read(BinaryReader reader, Dictionary<uint, string> nameLookupTable, HashIdentifiedDelegate hashIdentifiedCallback)
         {
@@ -121,7 +124,8 @@ namespace RouteSetTool
                         nodeEvent.Read(reader, nameLookupTable, hashIdentifiedCallback, FileVersion);
                         if (!nodeEvent.IsNodeEvent)
                         {
-                            throw new Exception($"@{reader.BaseStream.Position} Node event isn't node event!!!");
+                            //changed from exception to log warning cause it's no biggie for the game
+                            Console.WriteLine($"@{reader.BaseStream.Position} WARNING!!! Node event isn't node event!!!");
                         }
                         node.NodeEvents.Add(nodeEvent);
                         globalEventIndex++;
@@ -304,7 +308,10 @@ namespace RouteSetTool
                     yList.Add(node.Translation.y);
                     zList.Add(node.Translation.z);
                 }
-            ave.x = xList.Min(); ave.y = yList.Min(); ave.z = zList.Min();
+            ave.x = xList.Average(); ave.y = yList.Average(); ave.z = zList.Average();
+            /*Console.WriteLine($"Min: x={xList.Min()} y={yList.Min()} z={zList.Min()}");
+            Console.WriteLine($"Avr: x={xList.Average()} y={yList.Average()} z={zList.Average()}");
+            Console.WriteLine($"Max: x={xList.Max()} y={yList.Max()} z={zList.Max()}");*/
             return ave;
         }
         public void EventTypesGzToTpp()
@@ -313,40 +320,66 @@ namespace RouteSetTool
             {
                 foreach(RouteNode node in route.Nodes)
                 {
-
                     FoxHash newEdgeEvent = new FoxHash(FoxHash.Type.StrCode32);
 
                     foreach(var entry in EventTypeGZtoTPP)
-                    {
                         if (entry.Key.Item1== node.EdgeEvent.EventType.HashValue)
                         {
                             newEdgeEvent.HashValue = entry.Value.Item1;
                             newEdgeEvent.StringLiteral = entry.Value.Item2;
                             Console.WriteLine($"Edge event {node.EdgeEvent.EventType.HashValue} to {entry.Value.Item1}");
-
                             node.EdgeEvent.EventType = newEdgeEvent;
                         }
-                    }
+
                     foreach(RouteEvent nodeEvent in node.NodeEvents)
                     {
-
                         FoxHash newNodeEvent = new FoxHash(FoxHash.Type.StrCode32);
-
                         foreach (var entry in EventTypeGZtoTPP)
-                        {
                             if (entry.Key.Item1 == nodeEvent.EventType.HashValue)
                             {
                                 newNodeEvent.HashValue = entry.Value.Item1;
                                 newNodeEvent.StringLiteral = entry.Value.Item2;
                                 Console.WriteLine($"Node event {nodeEvent.EventType.HashValue} to {entry.Value.Item1}");
-
                                 nodeEvent.EventType = newNodeEvent;
                             }
-                        }
                     }
                 }
             }
         }
+
+        public XmlSchema GetSchema()
+        {
+            throw new NotImplementedException();
+        }
+
+        public void ReadXml(XmlReader reader)
+        {
+            reader.ReadStartElement("routeSet");
+            while (2>1)
+            {
+                switch (reader.NodeType)
+                {
+                    case XmlNodeType.Element:
+                        Console.WriteLine("ROUTE START");
+                        Route route = new Route();
+                        route.ReadXml(reader);
+                        Routes.Add(route);
+                        continue;
+                    case XmlNodeType.EndElement:
+                        Console.WriteLine("ROUTE END");
+                        return;
+                }
+            }
+        }
+
+        public void WriteXml(XmlWriter writer)
+        {
+            writer.WriteStartElement("routeSet");
+            foreach (Route route in Routes)
+                route.WriteXml(writer);
+            writer.WriteEndElement();
+        }
+
         public Dictionary<Tuple<uint, string>, Tuple<uint, string>> EventTypeGZtoTPP = new Dictionary<Tuple<uint, string>, Tuple<uint, string>>()
         {
             //EDGE:
@@ -381,5 +414,53 @@ namespace RouteSetTool
             { new Tuple<uint,string>(3240040728, null), new Tuple<uint,string>(199044653, "CautionSquatIdleAim") },//only use is 20040, end of route, FriendManRoute03, args is two str64: 89365857539635 81784608717711 no idea what kojima does there
             { new Tuple<uint,string>(3952237029, "Conversation"), new Tuple<uint,string>(1536918290, "ConversationIdle") },
         };
+        public void WhiteList(List<FoxHash> whitelist)
+        {
+            List<uint> newRouteHashes = new List<uint>();
+            //gotta do a lil double to make sure there ain't no trouble
+            foreach (uint hash in WhiteListRoutes(whitelist, newRouteHashes))
+                if (!newRouteHashes.Contains(hash))
+                    newRouteHashes.Add(hash);
+            foreach (uint hash in WhiteListRoutes(whitelist, newRouteHashes))
+                if (!newRouteHashes.Contains(hash))
+                    newRouteHashes.Add(hash);
+
+            foreach (Route route in Routes)
+                if (!newRouteHashes.Contains(route.Name.HashValue))
+                    Routes.Remove(route);
+        }
+        public List<uint> WhiteListRoutes(List<FoxHash> whitelist, List<uint> newRouteHashes)
+        {
+            foreach (FoxHash whitehash in whitelist)
+                foreach (Route route in Routes)
+                    if (route.Name.HashValue == whitehash.HashValue)
+                    {
+                        newRouteHashes.Add(route.Name.HashValue);
+                        if (route.Name.IsStringKnown)
+                            Console.WriteLine($"Added {route.Name.StringLiteral} to list");
+                        else
+                            Console.WriteLine($"Added {route.Name.HashValue} to list");
+                        foreach (RouteNode node in route.Nodes)
+                        {
+                            foreach (FoxHash aimTargetRouteName in node.EdgeEvent.AimTargetTypeParams.GetRouteNames())
+                            {
+                                newRouteHashes.Add(aimTargetRouteName.HashValue);
+                                if (aimTargetRouteName.IsStringKnown)
+                                    Console.WriteLine($"Added {aimTargetRouteName.StringLiteral} to list");
+                                else
+                                    Console.WriteLine($"Added {aimTargetRouteName.HashValue} to list");
+                            }
+                            foreach (FoxHash eventRouteName in node.EdgeEvent.EventTypeParams.GetRouteNames())
+                            {
+                                newRouteHashes.Add(eventRouteName.HashValue);
+                                if (eventRouteName.IsStringKnown)
+                                    Console.WriteLine($"Added {eventRouteName.StringLiteral} to list");
+                                else
+                                    Console.WriteLine($"Added {eventRouteName.HashValue} to list");
+                            }
+                        }
+                    }
+            return newRouteHashes;
+        }
     }
 }

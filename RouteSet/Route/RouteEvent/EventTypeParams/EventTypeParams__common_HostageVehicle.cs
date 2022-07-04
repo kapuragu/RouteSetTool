@@ -9,13 +9,14 @@ using System.Xml.Schema;
 
 namespace RouteSetTool
 {
-    //chase
-    public class EventTypeParams_chase : IEventTypeParams
+    //PutHostageInVehicle
+    //TakeHostageOutOfVehicle
+    public class EventTypeParams__common_HostageVehicle : IEventTypeParams
     {
-        //first three params are used, fourth one never used
-        public int Param0;
-        public int Param1;
-        public int Param2;
+        public uint Param0;
+        //Message hash
+        public FoxHash Message;
+        public uint Param2;
         public uint Param3;
 
         public XmlSchema GetSchema()
@@ -25,33 +26,37 @@ namespace RouteSetTool
 
         public void Read(BinaryReader reader, Dictionary<uint, string> nameLookupTable, HashIdentifiedDelegate hashIdentifiedCallback)
         {
-            Param0 = reader.ReadInt32();
-            Console.WriteLine($"@{reader.BaseStream.Position} Event param1: {Param0}");
-            Param1 = reader.ReadInt32();
-            Console.WriteLine($"@{reader.BaseStream.Position} Event param1: {Param1}");
-            Param2 = reader.ReadInt32();
-            Console.WriteLine($"@{reader.BaseStream.Position} Event param2: {Param2}");
+            Param0 = reader.ReadUInt32();
+
+            Message = new FoxHash(FoxHash.Type.StrCode32);
+            Message.Read(reader, nameLookupTable, hashIdentifiedCallback);
+            var Message_printString = Message.HashValue.ToString();
+            if (Message.IsStringKnown)
+                Message_printString = Message.StringLiteral;
+            Console.WriteLine($"@{reader.BaseStream.Position} Message: {Message_printString }");
+
+            Param2 = reader.ReadUInt32();
+
             Param3 = reader.ReadUInt32();
-            Console.WriteLine($"@{reader.BaseStream.Position} Event param3: {Param3}");
         }
 
         public void ReadXml(XmlReader reader)
         {
-            reader.ReadStartElement("eventParams_chase");
+            reader.ReadStartElement("eventParams__common_hostageVehicle");
 
-            reader.ReadStartElement("speed");
+            reader.ReadStartElement("param0");
             Param0 = 0;
-            int.TryParse(reader.ReadString(), out Param0);
+            uint.TryParse(reader.ReadString(), out Param0);
             reader.ReadEndElement();
 
-            reader.ReadStartElement("param1");
-            Param1 = 0;
-            int.TryParse(reader.ReadString(), out Param1);
+            reader.ReadStartElement("message");
+            Message = new FoxHash(FoxHash.Type.StrCode32);
+            Message.ReadXmlString(reader);
             reader.ReadEndElement();
 
             reader.ReadStartElement("param2");
             Param2 = 0;
-            int.TryParse(reader.ReadString(), out Param2);
+            uint.TryParse(reader.ReadString(), out Param2);
             reader.ReadEndElement();
 
             reader.ReadStartElement("param3");
@@ -65,21 +70,21 @@ namespace RouteSetTool
         public void Write(BinaryWriter writer)
         {
             writer.Write(Param0);
-            writer.Write(Param1);
+            writer.Write(Message.HashValue);
             writer.Write(Param2);
             writer.Write(Param3);
         }
 
         public void WriteXml(XmlWriter writer)
         {
-            writer.WriteStartElement("eventParams_chase");
+            writer.WriteStartElement("eventParams__common_hostageVehicle");
 
             writer.WriteStartElement("param0");
             writer.WriteString(Param0.ToString());
             writer.WriteEndElement();
 
-            writer.WriteStartElement("param1");
-            writer.WriteString(Param1.ToString());
+            writer.WriteStartElement("message");
+            Message.WriteXmlString(writer);
             writer.WriteEndElement();
 
             writer.WriteStartElement("param2");

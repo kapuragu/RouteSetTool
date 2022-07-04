@@ -74,5 +74,36 @@ namespace RouteSetTool
                 writer.WriteAttributeString(label, HashValue.ToString(CultureInfo.InvariantCulture));
             }
         }
+
+        public void WriteXmlString(XmlWriter writer)
+        {
+            if (IsStringKnown)
+            {
+                writer.WriteString(StringLiteral);
+            }
+            else
+            {
+                writer.WriteString(HashValue.ToString(CultureInfo.InvariantCulture));
+            }
+        }
+
+        public void ReadXmlString(XmlReader reader)
+        {
+            string value = reader.ReadString();
+
+            if (uint.TryParse(value, out uint maybeHash))
+            {
+                HashValue = maybeHash;
+            }
+            else
+            {
+                StringLiteral = value;
+
+                if (this.type == Type.StrCode32)
+                {
+                    HashValue = HashManager.StrCode32(StringLiteral);
+                }
+            }
+        }
     }
 }
