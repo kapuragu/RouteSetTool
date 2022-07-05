@@ -46,7 +46,7 @@ namespace RouteSetTool
 
         public void ReadXml(XmlReader reader, string label)
         {
-            string value = reader[label];
+            string value = reader.GetAttribute(label);
 
             if (uint.TryParse(value, out uint maybeHash))
             {

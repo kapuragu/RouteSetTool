@@ -355,22 +355,25 @@ namespace RouteSetTool
         public void ReadXml(XmlReader reader)
         {
             reader.ReadStartElement("routeSet");
-            while (2 > 1)
+            while (reader.Read())
             {
-                switch (reader.NodeType)
+                if (reader.Name.Equals("route") && reader.NodeType == XmlNodeType.Element)
                 {
-                    case XmlNodeType.Element:
-                        Console.WriteLine("ROUTE START");
-                        Route route = new Route();
-                        route.ReadXml(reader);
-                        Routes.Add(route);
-                        reader.ReadEndElement();
-                        continue;
-                    case XmlNodeType.EndElement:
-                        Console.WriteLine("ROUTE END");
-                        return;
+                    Console.WriteLine("ROUTE START");
+                    Route route = new Route();
+                    route.ReadXml(reader);
+                    Routes.Add(route);
+                    while (reader.Read())
+                    {
+                        if (reader.NodeType == XmlNodeType.EndElement && reader.Name.Equals("route"))
+                        {
+                            break;
+                        }
+                    }
                 }
             }
+
+            reader.ReadEndElement();
         }
 
         public void WriteXml(XmlWriter writer)

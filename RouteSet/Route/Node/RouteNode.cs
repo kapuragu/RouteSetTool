@@ -28,28 +28,28 @@ namespace RouteSetTool
             reader.ReadStartElement("node");
             RouteEvent edgeEvent = new RouteEvent() { IsNodeEvent=false };
             edgeEvent.ReadXml(reader);
-            reader.ReadEndElement();
             EdgeEvent = edgeEvent;
 
             reader.ReadStartElement("nodeEvents");
-            var loop = true;
-            while (loop)
+            while (reader.Read())
             {
-                switch (reader.NodeType)
+                if (reader.Name.Equals("event") && reader.NodeType == XmlNodeType.Element)
                 {
-                    case XmlNodeType.Element:
-                        Console.WriteLine("      EVENT START");
-                        RouteEvent nodeEvent = new RouteEvent() { IsNodeEvent = true };
-                        nodeEvent.ReadXml(reader);
-                        NodeEvents.Add(nodeEvent);
-                        reader.ReadEndElement();
-                        continue;
-                    case XmlNodeType.EndElement:
-                        Console.WriteLine("      EVENT END");
-                        loop = false;
-                        break;
+                    Console.WriteLine("      EVENT START");
+                    RouteEvent nodeEvent = new RouteEvent() { IsNodeEvent = true };
+                    nodeEvent.ReadXml(reader);
+                    NodeEvents.Add(nodeEvent);
+                    while (reader.Read())
+                    {
+                        if (reader.NodeType == XmlNodeType.EndElement && reader.Name.Equals("event"))
+                        {
+                            break;
+                        }
+                    }
                 }
             }
+
+            reader.ReadEndElement();
         }
 
         public void WriteXml(XmlWriter writer)

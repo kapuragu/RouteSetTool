@@ -30,24 +30,25 @@ namespace RouteSetTool
             Console.WriteLine($"Id {logName}");
 
             reader.ReadStartElement("route");
-            var loop = true;
-            while (loop)
+            while (reader.Read())
             {
-                switch (reader.NodeType)
+                if (reader.Name.Equals("node") && reader.NodeType == XmlNodeType.Element)
                 {
-                    case XmlNodeType.Element:
-                        Console.WriteLine("   NODE START");
-                        RouteNode node = new RouteNode();
-                        node.ReadXml(reader);
-                        Nodes.Add(node);
-                        reader.ReadEndElement();
-                        continue;
-                    case XmlNodeType.EndElement:
-                        Console.WriteLine("   NODE END");
-                        loop = false;
-                        break;
+                    Console.WriteLine("   NODE START");
+                    RouteNode node = new RouteNode();
+                    node.ReadXml(reader);
+                    Nodes.Add(node);
+                    while (reader.Read())
+                    {
+                        if (reader.NodeType == XmlNodeType.EndElement && reader.Name.Equals("node"))
+                        {
+                            break;
+                        }
+                    }
                 }
             }
+
+            reader.ReadEndElement();
         }
 
         public void WriteXml(XmlWriter writer)

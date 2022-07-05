@@ -118,9 +118,9 @@ namespace RouteSetTool
             //isnodeevent is set during call
             if (IsNodeEvent)
             {
-                IsLoop = bool.Parse(reader["loop"]);
-                Time= ushort.Parse(reader["time"]);
-                Dir = short.Parse(reader["dir"]);
+                IsLoop = bool.Parse(reader.GetAttribute("loop"));
+                Time= ushort.Parse(reader.GetAttribute("time"));
+                Dir = short.Parse(reader.GetAttribute("dir"));
                 Console.WriteLine($"IsNodeEvent true IsLoop: {IsLoop} Time: {Time} Dir: {Dir}");
             }
             else
@@ -140,6 +140,8 @@ namespace RouteSetTool
             //var readType = reader["type"];
             reader.ReadStartElement("params");
             EventTypeParams.ReadXml(reader);
+
+            reader.ReadEndElement();
 
             Console.WriteLine($"Snippet: {Snippet[0]} {Snippet[1]} {Snippet[2]} {Snippet[3]}");
         }
