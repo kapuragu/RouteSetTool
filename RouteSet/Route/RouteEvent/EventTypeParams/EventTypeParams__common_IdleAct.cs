@@ -59,9 +59,9 @@ namespace RouteSetTool
 
         public void ReadXml(XmlReader reader)
         {
-            reader.ReadStartElement("eventParams__common_hostageVehicle");
+            reader.ReadStartElement("eventParams__common_IdleAct");
 
-            reader.ReadStartElement("message");
+            reader.ReadStartElement("animation");
             Animation = new FoxHash(FoxHash.Type.StrCode32);
             Animation.ReadXmlString(reader);
             reader.ReadEndElement();
