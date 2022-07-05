@@ -185,10 +185,7 @@ namespace RouteSetTool
         }
         public List<FoxHash> GetRouteNames()
         {
-            List<FoxHash> routeNames = new List<FoxHash>();
-            foreach (FoxHash routeName in RouteNames)
-                routeNames.Add(routeName);
-            return routeNames;
+            return RouteNames.ToList();
         }
     }
     public class AimRouteAsObject : IAimTargetType
@@ -244,10 +241,7 @@ namespace RouteSetTool
         }
         public List<FoxHash> GetRouteNames()
         {
-            List<FoxHash> routeNames = new List<FoxHash>();
-            foreach (FoxHash routeName in RouteNames)
-                routeNames.Add(routeName);
-            return routeNames;
+            return RouteNames.ToList();
         }
     }
 }

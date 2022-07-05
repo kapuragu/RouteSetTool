@@ -87,7 +87,7 @@ namespace RouteSetTool
             }
             AimTargetTypeParams.Read(reader, nameLookupTable, hashIdentifiedCallback);
 
-            SetEventTypeFromHash();
+            SetEventTypeClass();
             EventTypeParams.Read(reader, nameLookupTable, hashIdentifiedCallback);
 
             if (version == RouteSetVersion.TPP)
@@ -136,7 +136,7 @@ namespace RouteSetTool
             AimTargetTypeParams = GetAimPointTypeFromXml(reader);
             AimTargetTypeParams.ReadXml(reader);
 
-            SetEventTypeFromHash();
+            SetEventTypeClass();
             EventTypeParams.ReadXml(reader);
 
             Console.WriteLine($"Snippet: {Snippet[0]} {Snippet[1]} {Snippet[2]} {Snippet[3]}");
@@ -194,7 +194,7 @@ namespace RouteSetTool
                 return new AimRouteAsObject();
             return new AimNone();
         }
-        public void SetEventTypeFromHash()
+        public void SetEventTypeClass()
         {
             switch (EventType.HashValue)
             {
@@ -228,12 +228,10 @@ namespace RouteSetTool
                 case 3396619717: //Hovering
                     EventTypeParams = new EventTypeParams__common_heli();
                     break;
-                case 2265318157: //SendMessage
-                    EventTypeParams = new EventTypeParams_SendMessage();
-                    break;
                 case 2829631605: //PutHostageInVehicle
                 case 2481191805: //TakeHostageOutOfVehicle
-                    EventTypeParams = new EventTypeParams__common_HostageVehicle();
+                case 2265318157: //SendMessage
+                    EventTypeParams = new EventTypeParams_SendMessage();
                     break;
                 case 385624276: //SwitchRoute
                     EventTypeParams = new EventTypeParams_SwitchRoute();

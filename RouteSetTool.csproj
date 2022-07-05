@@ -54,7 +54,6 @@
     <Compile Include="RouteSet\Route\RouteEvent\EventTypeParams\EventTypeParams_SwitchRoute.cs" />
     <Compile Include="RouteSet\Route\RouteEvent\EventTypeParams\EventTypeParams__common_Vehicle.cs" />
     <Compile Include="RouteSet\Route\RouteEvent\EventTypeParams\EventTypeParams_SyncRoute.cs" />
-    <Compile Include="RouteSet\Route\RouteEvent\EventTypeParams\EventTypeParams__common_HostageVehicle.cs" />
     <Compile Include="RouteSet\Route\RouteEvent\EventTypeParams\EventTypeParams_SendMessage.cs" />
     <Compile Include="RouteSet\Route\RouteEvent\EventTypeParams\EventTypeParams_ConversationIdle.cs" />
     <Compile Include="RouteSet\Route\RouteEvent\EventTypeParams\EventTypeParams_chase.cs" />

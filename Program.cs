@@ -59,8 +59,20 @@ namespace RouteSetTool
             {
                 if (File.Exists(arg))
                 {
-                    //paths
-                    paths.Add(arg);
+                    if (whiteListOn)
+                    {
+                        if (File.Exists(GetPathNearApp(arg)))
+                        {
+                            Console.WriteLine($"Whitelist {arg} detected");
+                            whiteListName = GetPathNearApp(arg);
+                            whiteListOn = false;
+                        }
+                    }
+                    else
+                    {
+                        //paths
+                        paths.Add(arg);
+                    }
                 }
                 else
                 {
@@ -69,15 +81,6 @@ namespace RouteSetTool
                     {
                         int.TryParse(arg, out version);
                         toVerOn = false;
-                        break;
-                    }
-
-                    if (whiteListOn)
-                    {
-                        if (File.Exists(GetPathNearApp(arg)))
-                        {
-                            whiteListName = GetPathNearApp(arg);
-                        }
                         break;
                     }
 
@@ -99,6 +102,7 @@ namespace RouteSetTool
                             toVerOn = true;
                             break;
                         case "-" + ArgWhiteList:
+                            Console.WriteLine("Whitelist arg detected");
                             whiteListOn = true;
                             break;
                         case "-" + ArgCombine:
@@ -117,6 +121,7 @@ namespace RouteSetTool
                     RouteSet frt = ReadFrt(path, hashManager.StrCode32LookupTable, hashManager.OnHashIdentified);
                     if (whiteListName != "")
                     {
+                        Console.WriteLine("Whitelisting...");
                         frt.WhiteList(GetWhiteList(whiteListName));
                     }
 
@@ -127,7 +132,8 @@ namespace RouteSetTool
                     }
 
                     if (combineName=="")
-                        WriteXml(frt, Path.GetFileNameWithoutExtension(path) + ".frt.xml");
+                        if (frt.Routes.Count > 0)
+                            WriteXml(frt, Path.GetFileNameWithoutExtension(path) + ".frt.xml");
                 }
                 else if (Path.GetExtension(path)==".xml")
                 {
@@ -158,7 +164,8 @@ namespace RouteSetTool
                     }
 
                     if (combineName == "")
-                        WriteFrt(Path.GetFileNameWithoutExtension(path), frt);
+                        if (frt.Routes.Count>0)
+                            WriteFrt(Path.GetFileNameWithoutExtension(path), frt);
                 }
 
                 /*
@@ -256,9 +263,9 @@ namespace RouteSetTool
         {
             return Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) + "/" + name;
         }
-        public static List<FoxHash> GetWhiteList(string path)
+        public static List<uint> GetWhiteList(string path)
         {
-            List<FoxHash> whiteList = new List<FoxHash>();
+            List<uint> whiteList = new List<uint>();
             using (StreamReader file = new StreamReader(path))
             {
                 // TODO multi-thread
@@ -269,14 +276,16 @@ namespace RouteSetTool
                     if (uint.TryParse(line, out uint maybeHash))
                     {
                         hash.HashValue = maybeHash;
+                        Console.WriteLine($"Inited {hash.HashValue} to list");
                     }
                     else
                     {
                         hash.StringLiteral = line;
 
                         hash.HashValue = HashManager.StrCode32(hash.StringLiteral);
+                        Console.WriteLine($"Inited {hash.StringLiteral} to list");
                     }
-                    whiteList.Add(hash);
+                    whiteList.Add(hash.HashValue);
                 }
             }
             return whiteList;

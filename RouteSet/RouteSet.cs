@@ -414,53 +414,99 @@ namespace RouteSetTool
             { new Tuple<uint,string>(3240040728, null), new Tuple<uint,string>(199044653, "CautionSquatIdleAim") },//only use is 20040, end of route, FriendManRoute03, args is two str64: 89365857539635 81784608717711 no idea what kojima does there
             { new Tuple<uint,string>(3952237029, "Conversation"), new Tuple<uint,string>(1536918290, "ConversationIdle") },
         };
-        public void WhiteList(List<FoxHash> whitelist)
+        public void WhiteList(List<uint> whitelist)
         {
-            List<uint> newRouteHashes = new List<uint>();
-            //gotta do a lil double to make sure there ain't no trouble
-            foreach (uint hash in WhiteListRoutes(whitelist, newRouteHashes))
-                if (!newRouteHashes.Contains(hash))
-                    newRouteHashes.Add(hash);
-            foreach (uint hash in WhiteListRoutes(whitelist, newRouteHashes))
-                if (!newRouteHashes.Contains(hash))
-                    newRouteHashes.Add(hash);
+            var loop = true;
+            while(loop)
+            {
+                var newWhitelist = UpdateWhitelist(whitelist);
+                if (!Enumerable.SequenceEqual(whitelist, newWhitelist))
+                    whitelist = newWhitelist;
+                else
+                    loop = false;
+            }
 
+            List<Route> newRoutes = new List<Route>();
             foreach (Route route in Routes)
-                if (!newRouteHashes.Contains(route.Name.HashValue))
-                    Routes.Remove(route);
+                if (whitelist.Contains(route.Name.HashValue))
+                    newRoutes.Add(route);
+            Routes = newRoutes;
         }
-        public List<uint> WhiteListRoutes(List<FoxHash> whitelist, List<uint> newRouteHashes)
+        public List<uint> GetWhiteListRoutes(List<uint> routeHashes)
         {
-            foreach (FoxHash whitehash in whitelist)
-                foreach (Route route in Routes)
-                    if (route.Name.HashValue == whitehash.HashValue)
+            foreach (Route route in Routes)
+                if (!routeHashes.Contains(route.Name.HashValue))
+                {
+                    routeHashes.Add(route.Name.HashValue);
+                    if (route.Name.IsStringKnown)
+                        Console.WriteLine($"Added {route.Name.StringLiteral} to list");
+                    else
+                        Console.WriteLine($"Added {route.Name.HashValue} to list");
+                }
+            return routeHashes;
+        }
+        public List<uint> UpdateWhitelist(List<uint> routeHashes)
+        {
+            List<uint> newHashes = routeHashes;
+            foreach (Route route in Routes)
+            {
+                if (routeHashes.Contains(route.Name.HashValue))
+                {
+                    foreach (RouteNode node in route.Nodes)
                     {
-                        newRouteHashes.Add(route.Name.HashValue);
-                        if (route.Name.IsStringKnown)
-                            Console.WriteLine($"Added {route.Name.StringLiteral} to list");
-                        else
-                            Console.WriteLine($"Added {route.Name.HashValue} to list");
-                        foreach (RouteNode node in route.Nodes)
+                        foreach (FoxHash aimTargetRouteName in node.EdgeEvent.AimTargetTypeParams.GetRouteNames())
                         {
-                            foreach (FoxHash aimTargetRouteName in node.EdgeEvent.AimTargetTypeParams.GetRouteNames())
+                            if (!routeHashes.Contains(aimTargetRouteName.HashValue))
                             {
-                                newRouteHashes.Add(aimTargetRouteName.HashValue);
+                                newHashes.Add(aimTargetRouteName.HashValue);
                                 if (aimTargetRouteName.IsStringKnown)
                                     Console.WriteLine($"Added {aimTargetRouteName.StringLiteral} to list");
                                 else
                                     Console.WriteLine($"Added {aimTargetRouteName.HashValue} to list");
                             }
-                            foreach (FoxHash eventRouteName in node.EdgeEvent.EventTypeParams.GetRouteNames())
+                        }
+
+                        foreach (FoxHash eventRouteName in node.EdgeEvent.EventTypeParams.GetRouteNames())
+                        {
+                            if (!routeHashes.Contains(eventRouteName.HashValue))
                             {
-                                newRouteHashes.Add(eventRouteName.HashValue);
+                                newHashes.Add(eventRouteName.HashValue);
                                 if (eventRouteName.IsStringKnown)
                                     Console.WriteLine($"Added {eventRouteName.StringLiteral} to list");
                                 else
                                     Console.WriteLine($"Added {eventRouteName.HashValue} to list");
                             }
                         }
+                        foreach (RouteEvent nodeEvent in node.NodeEvents)
+                        {
+                            foreach (FoxHash aimTargetRouteName in nodeEvent.AimTargetTypeParams.GetRouteNames())
+                            {
+                                if (!routeHashes.Contains(aimTargetRouteName.HashValue))
+                                {
+                                    newHashes.Add(aimTargetRouteName.HashValue);
+                                    if (aimTargetRouteName.IsStringKnown)
+                                        Console.WriteLine($"Added {aimTargetRouteName.StringLiteral} to list");
+                                    else
+                                        Console.WriteLine($"Added {aimTargetRouteName.HashValue} to list");
+                                }
+                            }
+
+                            foreach (FoxHash eventRouteName in nodeEvent.EventTypeParams.GetRouteNames())
+                            {
+                                if (!routeHashes.Contains(eventRouteName.HashValue))
+                                {
+                                    newHashes.Add(eventRouteName.HashValue);
+                                    if (eventRouteName.IsStringKnown)
+                                        Console.WriteLine($"Added {eventRouteName.StringLiteral} to list");
+                                    else
+                                        Console.WriteLine($"Added {eventRouteName.HashValue} to list");
+                                }
+                            }
+                        }
                     }
-            return newRouteHashes;
+                }
+            }
+            return newHashes;
         }
     }
 }
