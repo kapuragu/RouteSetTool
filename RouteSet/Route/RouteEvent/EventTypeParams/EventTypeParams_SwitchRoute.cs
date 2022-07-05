@@ -56,8 +56,6 @@ namespace RouteSetTool
 
         public void ReadXml(XmlReader reader)
         {
-            reader.ReadStartElement("eventParams_SwitchRoute");
-
             reader.ReadStartElement("routeName");
             RouteName = new FoxHash(FoxHash.Type.StrCode32);
             RouteName.ReadXmlString(reader);
@@ -91,7 +89,7 @@ namespace RouteSetTool
 
         public void WriteXml(XmlWriter writer)
         {
-            writer.WriteStartElement("eventParams_SwitchRoute");
+            writer.WriteAttributeString("type", "SwitchRoute");
 
             writer.WriteStartElement("routeName");
             RouteName.WriteXmlString(writer);

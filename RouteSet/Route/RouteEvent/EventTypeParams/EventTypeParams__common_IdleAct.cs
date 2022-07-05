@@ -59,8 +59,6 @@ namespace RouteSetTool
 
         public void ReadXml(XmlReader reader)
         {
-            reader.ReadStartElement("eventParams__common_IdleAct");
-
             reader.ReadStartElement("animation");
             Animation = new FoxHash(FoxHash.Type.StrCode32);
             Animation.ReadXmlString(reader);
@@ -94,7 +92,7 @@ namespace RouteSetTool
 
         public void WriteXml(XmlWriter writer)
         {
-            writer.WriteStartElement("eventParams__common_idleAct");
+            writer.WriteAttributeString("type", "common_idleAct");
 
             writer.WriteStartElement("animation");
             Animation.WriteXmlString(writer);

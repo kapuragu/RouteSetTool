@@ -48,8 +48,6 @@ namespace RouteSetTool
 
         public void ReadXml(XmlReader reader)
         {
-            reader.ReadStartElement("eventParams_SyncRoute");
-
             reader.ReadStartElement("syncTableName");
             SyncTableName = new FoxHash(FoxHash.Type.StrCode32);
             SyncTableName.ReadXmlString(reader);
@@ -83,7 +81,7 @@ namespace RouteSetTool
 
         public void WriteXml(XmlWriter writer)
         {
-            writer.WriteStartElement("eventParams_SyncRoute");
+            writer.WriteAttributeString("type", "SyncRoute");
 
             writer.WriteStartElement("syncTableName");
             SyncTableName.WriteXmlString(writer);

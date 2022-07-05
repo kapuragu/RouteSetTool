@@ -355,7 +355,7 @@ namespace RouteSetTool
         public void ReadXml(XmlReader reader)
         {
             reader.ReadStartElement("routeSet");
-            while (2>1)
+            while (2 > 1)
             {
                 switch (reader.NodeType)
                 {
@@ -364,6 +364,7 @@ namespace RouteSetTool
                         Route route = new Route();
                         route.ReadXml(reader);
                         Routes.Add(route);
+                        reader.ReadEndElement();
                         continue;
                     case XmlNodeType.EndElement:
                         Console.WriteLine("ROUTE END");

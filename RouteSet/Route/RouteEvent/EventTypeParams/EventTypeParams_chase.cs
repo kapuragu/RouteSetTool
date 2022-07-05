@@ -37,8 +37,6 @@ namespace RouteSetTool
 
         public void ReadXml(XmlReader reader)
         {
-            reader.ReadStartElement("eventParams_chase");
-
             reader.ReadStartElement("speed");
             Param0 = 0;
             int.TryParse(reader.ReadString(), out Param0);
@@ -72,7 +70,7 @@ namespace RouteSetTool
 
         public void WriteXml(XmlWriter writer)
         {
-            writer.WriteStartElement("eventParams_chase");
+            writer.WriteAttributeString("type", "chase");
 
             writer.WriteStartElement("param0");
             writer.WriteString(Param0.ToString());

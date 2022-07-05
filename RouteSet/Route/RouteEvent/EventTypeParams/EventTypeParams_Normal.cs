@@ -34,8 +34,6 @@ namespace RouteSetTool
 
         public void ReadXml(XmlReader reader)
         {
-            reader.ReadStartElement("eventParams_Normal");
-
             reader.ReadStartElement("flags");
             Flags = 0;
             uint.TryParse(reader.ReadString(), out Flags);
@@ -69,7 +67,7 @@ namespace RouteSetTool
 
         public void WriteXml(XmlWriter writer)
         {
-            writer.WriteStartElement("eventParams_Normal");
+            writer.WriteAttributeString("type", "Normal");
 
             writer.WriteStartElement("flags");
             writer.WriteString(Flags.ToString());

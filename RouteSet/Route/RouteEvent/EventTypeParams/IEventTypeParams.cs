@@ -36,7 +36,6 @@ namespace RouteSetTool
 
         public void ReadXml(XmlReader reader)
         {
-            reader.ReadStartElement("eventParams_default");
             for (int index = 0; index < 4; index++)
             {
                 reader.ReadStartElement("param" + index);
@@ -54,7 +53,7 @@ namespace RouteSetTool
 
         public void WriteXml(XmlWriter writer)
         {
-            writer.WriteStartElement("eventParams_default");
+            writer.WriteAttributeString("type", "default");
             for (int index = 0; index < 4; index++)
             {
                 writer.WriteStartElement("param" + index);

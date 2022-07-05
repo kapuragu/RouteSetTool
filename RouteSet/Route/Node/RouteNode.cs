@@ -24,24 +24,29 @@ namespace RouteSetTool
         {
             Translation = new Vector3();
             Translation.ReadXml(reader);
+            Console.WriteLine($"Translation x: {Translation.x} y: {Translation.y} z: {Translation.z}");
             reader.ReadStartElement("node");
             RouteEvent edgeEvent = new RouteEvent() { IsNodeEvent=false };
             edgeEvent.ReadXml(reader);
+            reader.ReadEndElement();
             EdgeEvent = edgeEvent;
-            bool doNodeLoop = true;
-            while (doNodeLoop)
+
+            reader.ReadStartElement("nodeEvents");
+            var loop = true;
+            while (loop)
             {
                 switch (reader.NodeType)
                 {
                     case XmlNodeType.Element:
-                        Console.WriteLine("     EVENT START");
+                        Console.WriteLine("      EVENT START");
                         RouteEvent nodeEvent = new RouteEvent() { IsNodeEvent = true };
                         nodeEvent.ReadXml(reader);
                         NodeEvents.Add(nodeEvent);
+                        reader.ReadEndElement();
                         continue;
                     case XmlNodeType.EndElement:
-                        Console.WriteLine("     EVENT END");
-                        doNodeLoop = false;
+                        Console.WriteLine("      EVENT END");
+                        loop = false;
                         break;
                 }
             }

@@ -49,8 +49,6 @@ namespace RouteSetTool
 
         public void ReadXml(XmlReader reader)
         {
-            reader.ReadStartElement("eventParams_SendMessage");
-
             reader.ReadStartElement("message");
             Message = new FoxHash(FoxHash.Type.StrCode32);
             Message.ReadXmlString(reader);
@@ -74,7 +72,7 @@ namespace RouteSetTool
 
         public void WriteXml(XmlWriter writer)
         {
-            writer.WriteStartElement("eventParams_SendMessage");
+            writer.WriteAttributeString("type", "SendMessage");
 
             writer.WriteStartElement("message");
             Message.WriteXmlString(writer);

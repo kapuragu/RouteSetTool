@@ -44,8 +44,6 @@ namespace RouteSetTool
 
         public void ReadXml(XmlReader reader)
         {
-            reader.ReadStartElement("eventParams__common_SpeedInt");
-
             reader.ReadStartElement("speed");
             Speed = 0;
             int.TryParse(reader.ReadString(), out Speed);
@@ -79,7 +77,7 @@ namespace RouteSetTool
 
         public void WriteXml(XmlWriter writer)
         {
-            writer.WriteStartElement("eventParams__common_SpeedInt");
+            writer.WriteAttributeString("type", "common_SpeedInt");
 
             writer.WriteStartElement("speed");
             writer.WriteString(Speed.ToString());

@@ -118,25 +118,27 @@ namespace RouteSetTool
             //isnodeevent is set during call
             if (IsNodeEvent)
             {
-                IsLoop = false;
-                bool.TryParse(reader["loop"], out IsLoop);
-                Time=0;
-                ushort.TryParse(reader["time"], out Time);
-                Dir = 0;
-                short.TryParse(reader["dir"], out Dir);
-                Console.WriteLine($"IsNodeEvent IsLoop: {IsLoop} IsLoop: {Time} IsLoop: {Dir}");
+                IsLoop = bool.Parse(reader["loop"]);
+                Time= ushort.Parse(reader["time"]);
+                Dir = short.Parse(reader["dir"]);
+                Console.WriteLine($"IsNodeEvent true IsLoop: {IsLoop} Time: {Time} Dir: {Dir}");
             }
             else
             {
                 IsLoop = false;
                 Time = 0;
                 Dir = 0;
+                Console.WriteLine("IsNodeEvent false");
             }
+
+            reader.ReadStartElement("event");
 
             AimTargetTypeParams = GetAimPointTypeFromXml(reader);
             AimTargetTypeParams.ReadXml(reader);
 
             SetEventTypeClass();
+            //var readType = reader["type"];
+            reader.ReadStartElement("params");
             EventTypeParams.ReadXml(reader);
 
             Console.WriteLine($"Snippet: {Snippet[0]} {Snippet[1]} {Snippet[2]} {Snippet[3]}");
@@ -179,18 +181,19 @@ namespace RouteSetTool
                 writer.WriteAttributeString("dir", Dir.ToString());
             }
             AimTargetTypeParams.WriteXml(writer);
+            writer.WriteStartElement("params");
             EventTypeParams.WriteXml(writer);
             writer.WriteEndElement();
         }
         public IAimTargetType GetAimPointTypeFromXml(XmlReader reader)
         {
-            if (reader.ReadToFollowing("staticPoint"))
+            if (reader.Name=="staticPoint")
                 return new AimStaticPoint();
-            else if (reader.ReadToFollowing("character"))
+            else if (reader.Name == "character")
                 return new AimCharacter();
-            else if (reader.ReadToFollowing("routeAsSightMovePath"))
+            else if (reader.Name == "routeAsSightMovePath")
                 return new AimRouteAsSightMovePath();
-            else if (reader.ReadToFollowing("routeAsObject"))
+            else if (reader.Name == "routeAsObject")
                 return new AimRouteAsObject();
             return new AimNone();
         }

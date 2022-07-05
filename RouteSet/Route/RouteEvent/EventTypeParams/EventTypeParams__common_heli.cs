@@ -37,8 +37,6 @@ namespace RouteSetTool
 
         public void ReadXml(XmlReader reader)
         {
-            reader.ReadStartElement("eventParams__common_heli");
-
             reader.ReadStartElement("param0");
             Param0 = 0;
             int.TryParse(reader.ReadString(), out Param0);
@@ -72,7 +70,7 @@ namespace RouteSetTool
 
         public void WriteXml(XmlWriter writer)
         {
-            writer.WriteStartElement("eventParams__common_heli");
+            writer.WriteAttributeString("type", "common_heli");
 
             writer.WriteStartElement("param0");
             writer.WriteString(Param0.ToString());

@@ -50,8 +50,6 @@ namespace RouteSetTool
 
         public void ReadXml(XmlReader reader)
         {
-            reader.ReadStartElement("eventParams_Conversation");
-
             reader.ReadStartElement("conversationSet");
             ConversationSetLabel = new FoxHash(FoxHash.Type.StrCode32);
             ConversationSetLabel.ReadXmlString(reader);
@@ -75,7 +73,7 @@ namespace RouteSetTool
 
         public void WriteXml(XmlWriter writer)
         {
-            writer.WriteStartElement("eventParams_Conversation");
+            writer.WriteAttributeString("type", "Conversation");
 
             writer.WriteStartElement("conversationSet");
             ConversationSetLabel.WriteXmlString(writer);

@@ -50,8 +50,6 @@ namespace RouteSetTool
 
         public void ReadXml(XmlReader reader)
         {
-            reader.ReadStartElement("eventParams__common_Vehicle");
-
             reader.ReadStartElement("rail");
             RailName = new FoxHash(FoxHash.Type.StrCode32);
             RailName.ReadXmlString(reader);
@@ -85,7 +83,7 @@ namespace RouteSetTool
 
         public void WriteXml(XmlWriter writer)
         {
-            writer.WriteStartElement("eventParams__common_Vehicle");
+            writer.WriteAttributeString("type", "common_Vehicle");
 
             writer.WriteStartElement("rail");
             RailName.WriteXmlString(writer);

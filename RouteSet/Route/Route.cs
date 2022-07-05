@@ -23,21 +23,28 @@ namespace RouteSetTool
         {
             Name = new FoxHash(FoxHash.Type.StrCode32);
             Name.ReadXml(reader, "id");
-            bool doNodeLoop = true;
+
+            var logName = Name.HashValue.ToString();
+            if (Name.IsStringKnown)
+                logName = Name.StringLiteral;
+            Console.WriteLine($"Id {logName}");
+
             reader.ReadStartElement("route");
-            while (doNodeLoop)
+            var loop = true;
+            while (loop)
             {
                 switch (reader.NodeType)
                 {
                     case XmlNodeType.Element:
-                        Console.WriteLine(" NODE START");
+                        Console.WriteLine("   NODE START");
                         RouteNode node = new RouteNode();
                         node.ReadXml(reader);
                         Nodes.Add(node);
+                        reader.ReadEndElement();
                         continue;
                     case XmlNodeType.EndElement:
-                        Console.WriteLine(" NODE END");
-                        doNodeLoop = false;
+                        Console.WriteLine("   NODE END");
+                        loop = false;
                         break;
                 }
             }
