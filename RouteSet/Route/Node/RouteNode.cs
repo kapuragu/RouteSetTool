@@ -27,29 +27,51 @@ namespace RouteSetTool
             Console.WriteLine($"Translation x: {Translation.x} y: {Translation.y} z: {Translation.z}");
             reader.ReadStartElement("node");
             RouteEvent edgeEvent = new RouteEvent() { IsNodeEvent=false };
+            var readingEdge = true;
             edgeEvent.ReadXml(reader);
+            reader.ReadEndElement();
+            readingEdge = false;
             EdgeEvent = edgeEvent;
 
-            reader.ReadStartElement("nodeEvents");
-            while (reader.Read())
+            while ((2 > 1)&!readingEdge)
             {
-                if (reader.Name.Equals("event") && reader.NodeType == XmlNodeType.Element)
+                switch (reader.NodeType)
                 {
-                    Console.WriteLine("      EVENT START");
-                    RouteEvent nodeEvent = new RouteEvent() { IsNodeEvent = true };
-                    nodeEvent.ReadXml(reader);
-                    NodeEvents.Add(nodeEvent);
-                    while (reader.Read())
-                    {
-                        if (reader.NodeType == XmlNodeType.EndElement && reader.Name.Equals("event"))
+                    case XmlNodeType.Element:
+                        if (reader.Name == "nodeEvents")
                         {
-                            break;
+                            reader.ReadStartElement("nodeEvents");
+                            Console.WriteLine("      NODEEVENTS START");
                         }
-                    }
+                        else if (reader.Name == "event")
+                        {
+                            Console.WriteLine("         EVENT START");
+                            RouteEvent nodeEvent = new RouteEvent() { IsNodeEvent = true };
+                            nodeEvent.ReadXml(reader);
+                            reader.ReadEndElement();
+                            NodeEvents.Add(nodeEvent);
+                        }
+                        continue;
+                    case XmlNodeType.EndElement:
+                        if (reader.Name == "event")
+                        {
+                            Console.WriteLine("         EVENT END");
+                            reader.ReadEndElement();
+                            continue;
+                        }
+                        else if (reader.Name== "nodeEvents")
+                        {
+                            Console.WriteLine("      NODEEVENTS END");
+                            reader.ReadEndElement();
+                            return;
+                        }
+                        else
+                        {
+                            return;
+                        }
+
                 }
             }
-
-            reader.ReadEndElement();
         }
 
         public void WriteXml(XmlWriter writer)

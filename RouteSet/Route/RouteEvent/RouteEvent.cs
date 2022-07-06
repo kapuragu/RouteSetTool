@@ -141,8 +141,6 @@ namespace RouteSetTool
             reader.ReadStartElement("params");
             EventTypeParams.ReadXml(reader);
 
-            reader.ReadEndElement();
-
             Console.WriteLine($"Snippet: {Snippet[0]} {Snippet[1]} {Snippet[2]} {Snippet[3]}");
         }
 
@@ -189,15 +187,24 @@ namespace RouteSetTool
         }
         public IAimTargetType GetAimPointTypeFromXml(XmlReader reader)
         {
-            if (reader.Name=="staticPoint")
-                return new AimStaticPoint();
-            else if (reader.Name == "character")
-                return new AimCharacter();
-            else if (reader.Name == "routeAsSightMovePath")
-                return new AimRouteAsSightMovePath();
-            else if (reader.Name == "routeAsObject")
-                return new AimRouteAsObject();
-            return new AimNone();
+            switch (reader.Name)
+            {
+                case "staticPoint":
+                    AimTargetType = RouteAimTargetType.ROUTE_AIM_STATIC_POINT;
+                    return new AimStaticPoint();
+                case "character":
+                    AimTargetType = RouteAimTargetType.ROUTE_AIM_CHARACTER;
+                    return new AimCharacter();
+                case "routeAsSightMovePath":
+                    AimTargetType = RouteAimTargetType.ROUTE_AIM_ROUTE_AS_SIGHT_MOVE_PATH;
+                    return new AimRouteAsSightMovePath();
+                case "routeAsObject":
+                    AimTargetType = RouteAimTargetType.ROUTE_AIM_ROUTE_AS_OBJECT;
+                    return new AimRouteAsObject();
+                default:
+                    AimTargetType = RouteAimTargetType.ROUTE_AIM_NO_TARGET;
+                    return new AimNone();
+            }
         }
         public void SetEventTypeClass()
         {

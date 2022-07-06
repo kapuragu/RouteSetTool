@@ -157,12 +157,14 @@ namespace RouteSetTool
 
         public void ReadXml(XmlReader reader)
         {
+            reader.ReadStartElement("routeAsSightMovePath");
             for (int index = 0; index < 4; index++)
             {
+                reader.ReadStartElement("routeAsSightMovePath" + index);
                 RouteNames[index] = new FoxHash(FoxHash.Type.StrCode32);
                 RouteNames[index].ReadXmlString(reader);
+                reader.ReadEndElement();
             }
-            reader.ReadStartElement("routeAsSightMovePath");
             reader.ReadEndElement();
         }
 
@@ -213,12 +215,14 @@ namespace RouteSetTool
 
         public void ReadXml(XmlReader reader)
         {
+            reader.ReadStartElement("routeAsObject");
             for (int index = 0; index < 4; index++)
             {
+                reader.ReadStartElement("routeAsObject" + index);
                 RouteNames[index] = new FoxHash(FoxHash.Type.StrCode32);
                 RouteNames[index].ReadXmlString(reader);
+                reader.ReadEndElement();
             }
-            reader.ReadStartElement("routeAsSightMovePath");
             reader.ReadEndElement();
         }
 
