@@ -19,11 +19,11 @@ namespace RouteSetTool
         private const string RouteIdUserDictionary = "route_ids_user.txt";
         private const string RouteEventParamUserDictionary = "route_event_messages.txt";
 
-        // -tover 3 e20010_area02.frt
-        private const string ArgToVer = "tover";
-        // -whitelist afgh_sovietBase_enemy.txt f30010.frt
+        // -version 3 e20010_area02.frt.xml
+        private const string ArgVersion = "version";
+        // -whitelist whitelist.txt f30010.frt
         private const string ArgWhiteList = "whitelist";
-        // -combine sovietBase_and_south.frt afgh_sovietBase_enemy.frt afgh_sovietSouth_enemy.frt
+        // -combine result.frt afgh_sovietBase_enemy.frt afgh_sovietSouth_enemy.frt
         private const string ArgCombine = "combine"; 
         static void Main(string[] args)
         {
@@ -48,7 +48,7 @@ namespace RouteSetTool
 
             List<string> paths = new List<string>();
 
-            var toVerOn = false;
+            var versionOn = false;
             var version = 0;
             var whiteListOn = false;
             var whiteListName = "";
@@ -72,16 +72,18 @@ namespace RouteSetTool
                     {
                         //paths
                         paths.Add(arg);
+                        Console.WriteLine($"Adding {arg} to read list...");
                     }
                 }
                 else
                 {
                     //arguments
-                    if (toVerOn)
+                    if (versionOn)
                     {
                         int.TryParse(arg, out version);
-                        toVerOn = false;
-                        break;
+                        versionOn = false;
+                        Console.WriteLine($"Version {arg} detected, use ver {version}");
+                        continue;
                     }
 
                     if (combineOn)
@@ -91,15 +93,16 @@ namespace RouteSetTool
                         {
                             combineName += ".frt";
                         }
-                        break;
+                        continue;
                     }
 
                     switch (arg.ToLower())
                     {
                         default:
                             break;
-                        case "-"+ArgToVer:
-                            toVerOn = true;
+                        case "-"+ArgVersion:
+                            Console.WriteLine("Version arg detected");
+                            versionOn = true;
                             break;
                         case "-" + ArgWhiteList:
                             Console.WriteLine("Whitelist arg detected");
@@ -148,6 +151,7 @@ namespace RouteSetTool
                                 break;
                             case (int)RouteSetVersion.TPP:
                                 frt.FileVersion = RouteSetVersion.TPP;
+                                frt.EventTypesGzToTpp();
                                 break;
                         }
                     }
@@ -186,7 +190,7 @@ namespace RouteSetTool
                 WriteXml(frt, combineName);
             }
 
-            Console.Read();//DEBUG Hold Console
+            //Console.Read();//DEBUG Hold Console
         }
         public static RouteSet ReadFrt(string path, Dictionary<uint, string> nameLookupTable, HashIdentifiedDelegate hashIdentifiedCallback)
         {
