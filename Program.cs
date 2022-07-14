@@ -153,7 +153,6 @@ namespace RouteSetTool
                     if (convertEventOn)
                         frt.EventTypesGzToTpp();
 
-                    //wip
                     if (version > 0)
                         switch (version)
                         {
@@ -164,6 +163,10 @@ namespace RouteSetTool
                                 frt.FileVersion = RouteSetVersion.TPP;
                                 break;
                         }
+                    else
+                    {
+                        frt.FileVersion = RouteSetVersion.TPP;
+                    }
 
                     if (whiteListName != "")
                         frt.WhiteList(GetWhiteList(whiteListName));

@@ -36,7 +36,7 @@ namespace RouteSetTool
         public IEventParam Param2 = new EventParamInt();
         public IEventParam Param3 = new EventParamInt();
 
-        public char[] Snippet = new char[4];
+        //public string Snippet = new char[4]{'\0','\0','\0','\0'}.ToString();
 
         public XmlSchema GetSchema()
         {
@@ -105,9 +105,10 @@ namespace RouteSetTool
                 */
                 //solution: https://stackoverflow.com/a/25354715
                 byte[] str = reader.ReadBytes(4);
-                Snippet = Encoding.Default.GetChars(str, 0, 4);
-                Array.Reverse(str);
-                //Console.WriteLine($"@{reader.BaseStream.Position} Snippet: {BitConverter.ToUInt32(str, 0)}");
+                var charas = Encoding.Default.GetChars(str, 0, 4);
+                Array.Reverse(charas);
+                string snippet = charas.ToString();
+                //Console.WriteLine($"@{reader.BaseStream.Position} Snippet: {BitConverter.ToUInt32(snippet, 0)}");
             }
         }
 
@@ -187,7 +188,19 @@ namespace RouteSetTool
             Param3.Write(writer);
 
             if (version == RouteSetVersion.TPP)
-                writer.Write(Snippet); //writer.WriteZeroes(4);
+            {
+                /* 
+                var str = new char[4] { '\0' , '\0' , '\0' , '\0' };
+                for (int i = 0; i < 4; i++)
+                    if (Snippet.Length<i)
+                        str[i] = Snippet.ToCharArray()[i];
+                for (int i = 0; i < 4; i++)
+                {
+                    writer.Write(str[i]);
+                }*/
+                //Yeah screw it
+                writer.WriteZeroes(4);
+            }
         }
 
         public void WriteXml(XmlWriter writer)

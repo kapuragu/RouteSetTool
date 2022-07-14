@@ -480,27 +480,10 @@ namespace RouteSetTool
                 {
                     foreach (RouteNode node in route.Nodes)
                     {
-                        foreach (FoxHash aimTargetRouteName in node.EdgeEvent.AimTargetTypeParams.GetRouteNames())
-                        {
-                            if (!newHashes.Contains(aimTargetRouteName.HashValue))
-                            {
-                                newHashes.Add(aimTargetRouteName.HashValue);
-                                if (aimTargetRouteName.IsStringKnown)
-                                    Console.WriteLine($"Added {aimTargetRouteName.StringLiteral} to list");
-                                else
-                                    Console.WriteLine($"Added {aimTargetRouteName.HashValue} to list");
-                            }
-                        }
-                        foreach (uint hash in UpdateWhitelistEvent(node.EdgeEvent, routeHashes))
-                        {
-                            newHashes.Add(hash);
-                        }
+                        newHashes.Union(UpdateWhitelistEvent(node.EdgeEvent, routeHashes));
                         foreach (RouteEvent nodeEvent in node.NodeEvents)
                         {
-                            foreach (uint hash in UpdateWhitelistEvent(nodeEvent, routeHashes))
-                            {
-                                newHashes.Add(hash);
-                            }
+                            newHashes.Union(UpdateWhitelistEvent(nodeEvent, routeHashes));
                         }
                     }
                 }
