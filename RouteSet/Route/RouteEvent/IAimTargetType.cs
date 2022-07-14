@@ -58,7 +58,7 @@ namespace RouteSetTool
             var point = new Vector3();
             point.Read(reader);
             StaticPoint = point;
-            Console.WriteLine($"@{reader.BaseStream.Position} Aim target: | {StaticPoint.x} || {StaticPoint.y} || {StaticPoint.z} |");
+            //Console.WriteLine($"@{reader.BaseStream.Position} Aim target: | {StaticPoint.x} || {StaticPoint.y} || {StaticPoint.z} |");
             reader.ReadZeroes(4);
         }
 
@@ -99,10 +99,10 @@ namespace RouteSetTool
         {
             CharacterName = new FoxHash(FoxHash.Type.StrCode32);
             CharacterName.Read(reader, nameLookupTable, hashIdentifiedCallback);
-            var CharacterName_printString = CharacterName.HashValue.ToString();
+            /*var CharacterName_printString = CharacterName.HashValue.ToString();
             if (CharacterName.IsStringKnown)
                 CharacterName_printString = CharacterName.StringLiteral;
-            Console.WriteLine($"@{reader.BaseStream.Position} Character aim target: {CharacterName_printString }");
+            Console.WriteLine($"@{reader.BaseStream.Position} Character aim target: {CharacterName_printString }");*/
 
             reader.BaseStream.Position += 4;//ASSUMING strcode64 leftovers here
             reader.ReadZeroes(4 * 2);
@@ -110,9 +110,9 @@ namespace RouteSetTool
 
         public void ReadXml(XmlReader reader)
         {
+            reader.ReadStartElement("character");
             CharacterName = new FoxHash(FoxHash.Type.StrCode32);
             CharacterName.ReadXmlString(reader);
-            reader.ReadStartElement("character");
             reader.ReadEndElement();
         }
 
@@ -148,10 +148,10 @@ namespace RouteSetTool
             {
                 RouteNames[index] = new FoxHash(FoxHash.Type.StrCode32);
                 RouteNames[index].Read(reader, nameLookupTable, hashIdentifiedCallback);
+                /*var routeNameToLog = RouteNames[index].HashValue.ToString();
                 if (RouteNames[index].IsStringKnown)
-                    Console.WriteLine($"@{reader.BaseStream.Position} Route Target#{index} Name: {RouteNames[index].StringLiteral}");
-                else
-                    Console.WriteLine($"@{reader.BaseStream.Position} Route Target#{index} Name: {RouteNames[index].HashValue}");
+                    routeNameToLog = RouteNames[index].StringLiteral;
+                Console.WriteLine($"@{reader.BaseStream.Position} Route Target#{index} Name: {routeNameToLog}");*/
             }
         }
 
@@ -187,7 +187,7 @@ namespace RouteSetTool
         }
         public List<FoxHash> GetRouteNames()
         {
-            return RouteNames.ToList();
+            return new List<FoxHash>() { RouteNames[0], RouteNames[1], RouteNames[2], RouteNames[3], };
         }
     }
     public class AimRouteAsObject : IAimTargetType
@@ -206,10 +206,10 @@ namespace RouteSetTool
             {
                 RouteNames[index] = new FoxHash(FoxHash.Type.StrCode32);
                 RouteNames[index].Read(reader, nameLookupTable, hashIdentifiedCallback);
+                /*var routeNameToLog = RouteNames[index].HashValue.ToString();
                 if (RouteNames[index].IsStringKnown)
-                    Console.WriteLine($"@{reader.BaseStream.Position} Route Target#{index} Name: {RouteNames[index].StringLiteral}");
-                else
-                    Console.WriteLine($"@{reader.BaseStream.Position} Route Target#{index} Name: {RouteNames[index].HashValue}");
+                    routeNameToLog = RouteNames[index].StringLiteral;
+                Console.WriteLine($"@{reader.BaseStream.Position} Route Target#{index} Name: {routeNameToLog}");*/
             }
         }
 
@@ -245,7 +245,7 @@ namespace RouteSetTool
         }
         public List<FoxHash> GetRouteNames()
         {
-            return RouteNames.ToList();
+            return new List<FoxHash>() { RouteNames[0], RouteNames[1], RouteNames[2], RouteNames[3], };
         }
     }
 }

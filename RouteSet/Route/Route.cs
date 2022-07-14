@@ -27,7 +27,7 @@ namespace RouteSetTool
             var logName = Name.HashValue.ToString();
             if (Name.IsStringKnown)
                 logName = Name.StringLiteral;
-            Console.WriteLine($"Id {logName}");
+            //Console.WriteLine($"Id {logName}");
 
             reader.ReadStartElement("route");
             while (2 > 1)
@@ -35,7 +35,7 @@ namespace RouteSetTool
                 switch (reader.NodeType)
                 {
                     case XmlNodeType.Element:
-                        Console.WriteLine("   NODE START");
+                        //Console.WriteLine("   NODE START");
                         RouteNode node = new RouteNode();
                         node.ReadXml(reader);
                         reader.ReadEndElement();
@@ -44,7 +44,7 @@ namespace RouteSetTool
                     case XmlNodeType.EndElement:
                         if (reader.Name == "node")
                         {
-                            Console.WriteLine("   NODE END");
+                            //Console.WriteLine("   NODE END");
                             reader.ReadEndElement();
                             continue;
                         }

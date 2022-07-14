@@ -33,7 +33,7 @@ namespace RouteSetTool
             //Vector3 Bit Unpacking by Joey:
             //https://discord.com/channels/364177293133873153/364178190588968970/894215344099573760
             //https://cdn.discordapp.com/attachments/364178190588968970/894215342069538907/unknown.png
-            Console.WriteLine($"Translation packed #{nodePacked}");
+            //Console.WriteLine($"Translation packed #{nodePacked}");
 
             uint packed_x = (uint)(nodePacked & 0x003FFFFF);
             if ((packed_x & (1 << 21))!=0)

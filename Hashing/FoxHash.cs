@@ -14,7 +14,6 @@ namespace RouteSetTool
         public enum Type
         {
             StrCode32,
-            StrCode64
         }
 
         public uint HashValue;

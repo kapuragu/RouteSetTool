@@ -24,7 +24,7 @@ namespace RouteSetTool
         {
             Translation = new Vector3();
             Translation.ReadXml(reader);
-            Console.WriteLine($"Translation x: {Translation.x} y: {Translation.y} z: {Translation.z}");
+            //Console.WriteLine($"Translation x: {Translation.x} y: {Translation.y} z: {Translation.z}");
             reader.ReadStartElement("node");
             RouteEvent edgeEvent = new RouteEvent() { IsNodeEvent=false };
             var readingEdge = true;
@@ -41,11 +41,11 @@ namespace RouteSetTool
                         if (reader.Name == "nodeEvents")
                         {
                             reader.ReadStartElement("nodeEvents");
-                            Console.WriteLine("      NODEEVENTS START");
+                            //Console.WriteLine("      NODEEVENTS START");
                         }
                         else if (reader.Name == "event")
                         {
-                            Console.WriteLine("         EVENT START");
+                            //Console.WriteLine("         EVENT START");
                             RouteEvent nodeEvent = new RouteEvent() { IsNodeEvent = true };
                             nodeEvent.ReadXml(reader);
                             reader.ReadEndElement();
@@ -55,13 +55,13 @@ namespace RouteSetTool
                     case XmlNodeType.EndElement:
                         if (reader.Name == "event")
                         {
-                            Console.WriteLine("         EVENT END");
+                            //Console.WriteLine("         EVENT END");
                             reader.ReadEndElement();
                             continue;
                         }
                         else if (reader.Name== "nodeEvents")
                         {
-                            Console.WriteLine("      NODEEVENTS END");
+                            //Console.WriteLine("      NODEEVENTS END");
                             reader.ReadEndElement();
                             return;
                         }

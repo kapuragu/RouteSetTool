@@ -31,7 +31,10 @@ namespace RouteSetTool
         public short Dir = 0;
 
         public IAimTargetType AimTargetTypeParams = new AimNone();
-        public IEventTypeParams EventTypeParams = new EventTypeParams_Default();
+        public IEventParam Param0 = new EventParamInt();
+        public IEventParam Param1 = new EventParamInt();
+        public IEventParam Param2 = new EventParamInt();
+        public IEventParam Param3 = new EventParamInt();
 
         public char[] Snippet = new char[4];
 
@@ -52,7 +55,7 @@ namespace RouteSetTool
             var logName = EventType.HashValue.ToString();
             if (EventType.IsStringKnown)
                 logName = EventType.StringLiteral;
-            Console.WriteLine($"@{reader.BaseStream.Position} Event {logName}: Is node event: {IsNodeEvent}, aim type: {AimTargetType}, is loop: {IsLoop}");
+            //Console.WriteLine($"@{reader.BaseStream.Position} Event {logName}: Is node event: {IsNodeEvent}, aim type: {AimTargetType}, is loop: {IsLoop}");
 
             Time = reader.ReadUInt16();
             Dir = reader.ReadInt16();
@@ -64,7 +67,7 @@ namespace RouteSetTool
                 reader.ReadZeroes(3);
             }
 
-            Console.WriteLine($"@{reader.BaseStream.Position} Time: {Time}, direction: {Dir}");
+            //Console.WriteLine($"@{reader.BaseStream.Position} Time: {Time}, direction: {Dir}");
 
             switch (AimTargetType)
             {
@@ -87,8 +90,11 @@ namespace RouteSetTool
             }
             AimTargetTypeParams.Read(reader, nameLookupTable, hashIdentifiedCallback);
 
-            SetEventTypeClass();
-            EventTypeParams.Read(reader, nameLookupTable, hashIdentifiedCallback);
+            SetEventParamTypesByHash();
+            Param0.Read(reader, nameLookupTable, hashIdentifiedCallback);
+            Param1.Read(reader, nameLookupTable, hashIdentifiedCallback);
+            Param2.Read(reader, nameLookupTable, hashIdentifiedCallback);
+            Param3.Read(reader, nameLookupTable, hashIdentifiedCallback);
 
             if (version == RouteSetVersion.TPP)
             {
@@ -101,7 +107,7 @@ namespace RouteSetTool
                 byte[] str = reader.ReadBytes(4);
                 Snippet = Encoding.Default.GetChars(str, 0, 4);
                 Array.Reverse(str);
-                Console.WriteLine($"@{reader.BaseStream.Position} Snippet: {BitConverter.ToUInt32(str, 0)}");
+                //Console.WriteLine($"@{reader.BaseStream.Position} Snippet: {BitConverter.ToUInt32(str, 0)}");
             }
         }
 
@@ -110,10 +116,10 @@ namespace RouteSetTool
             EventType = new FoxHash(FoxHash.Type.StrCode32);
             EventType.ReadXml(reader, "type");
 
-            var logName = EventType.HashValue.ToString();
+            /*var logName = EventType.HashValue.ToString();
             if (EventType.IsStringKnown)
                 logName = EventType.StringLiteral;
-            Console.WriteLine($"Event {logName}");
+            Console.WriteLine($"Event {logName}");*/
 
             //isnodeevent is set during call
             if (IsNodeEvent)
@@ -121,14 +127,14 @@ namespace RouteSetTool
                 IsLoop = bool.Parse(reader.GetAttribute("loop"));
                 Time= ushort.Parse(reader.GetAttribute("time"));
                 Dir = short.Parse(reader.GetAttribute("dir"));
-                Console.WriteLine($"IsNodeEvent true IsLoop: {IsLoop} Time: {Time} Dir: {Dir}");
+                //Console.WriteLine($"IsNodeEvent true IsLoop: {IsLoop} Time: {Time} Dir: {Dir}");
             }
             else
             {
                 IsLoop = false;
                 Time = 0;
                 Dir = 0;
-                Console.WriteLine("IsNodeEvent false");
+                //Console.WriteLine("IsNodeEvent false");
             }
 
             reader.ReadStartElement("event");
@@ -136,12 +142,23 @@ namespace RouteSetTool
             AimTargetTypeParams = GetAimPointTypeFromXml(reader);
             AimTargetTypeParams.ReadXml(reader);
 
-            SetEventTypeClass();
-            //var readType = reader["type"];
-            reader.ReadStartElement("params");
-            EventTypeParams.ReadXml(reader);
+            Param0 = SetEventParamTypeReadXml(reader);
+            reader.ReadStartElement("param0");
+            Param0.ReadXml(reader);
 
-            Console.WriteLine($"Snippet: {Snippet[0]} {Snippet[1]} {Snippet[2]} {Snippet[3]}");
+            Param1 = SetEventParamTypeReadXml(reader);
+            reader.ReadStartElement("param1");
+            Param1.ReadXml(reader);
+
+            Param2 = SetEventParamTypeReadXml(reader);
+            reader.ReadStartElement("param2");
+            Param2.ReadXml(reader);
+
+            Param3 = SetEventParamTypeReadXml(reader);
+            reader.ReadStartElement("param3");
+            Param3.ReadXml(reader);
+
+            //Console.WriteLine($"Snippet: {Snippet[0]} {Snippet[1]} {Snippet[2]} {Snippet[3]}");
         }
 
         public void Write(BinaryWriter writer, RouteSetVersion version)
@@ -164,7 +181,10 @@ namespace RouteSetTool
             }
 
             AimTargetTypeParams.Write(writer);
-            EventTypeParams.Write(writer);
+            Param0.Write(writer);
+            Param1.Write(writer);
+            Param2.Write(writer);
+            Param3.Write(writer);
 
             if (version == RouteSetVersion.TPP)
                 writer.Write(Snippet); //writer.WriteZeroes(4);
@@ -181,8 +201,14 @@ namespace RouteSetTool
                 writer.WriteAttributeString("dir", Dir.ToString());
             }
             AimTargetTypeParams.WriteXml(writer);
-            writer.WriteStartElement("params");
-            EventTypeParams.WriteXml(writer);
+            writer.WriteStartElement("param0");
+            Param0.WriteXml(writer);
+            writer.WriteStartElement("param1");
+            Param1.WriteXml(writer);
+            writer.WriteStartElement("param2");
+            Param2.WriteXml(writer);
+            writer.WriteStartElement("param3");
+            Param3.WriteXml(writer);
             writer.WriteEndElement();
         }
         public IAimTargetType GetAimPointTypeFromXml(XmlReader reader)
@@ -206,26 +232,28 @@ namespace RouteSetTool
                     return new AimNone();
             }
         }
-        public void SetEventTypeClass()
+        public IEventParam SetEventParamTypeReadXml(XmlReader reader)
+        {
+            switch (reader["type"])
+            {
+                default:
+                    throw new NotImplementedException();
+                case "uint32":
+                    return new EventParamUInt();
+                case "int32":
+                    return new EventParamInt();
+                case "float":
+                    return new EventParamFloat();
+                case "String":
+                    return new EventParamStrCode32();
+            }
+        }
+        public void SetEventParamTypesByHash()
         {
             switch (EventType.HashValue)
             {
                 default:
-                    EventTypeParams = new EventTypeParams_Default();
-                    break;
-                case 4019510599: //RelaxedIdleAct
-                case 2973097149: //CautionIdleAct
-                    EventTypeParams = new EventTypeParams__common_IdleAct();
-                    break;
                 case 804119634: //chase
-                    EventTypeParams = new EventTypeParams_chase();
-                    break;
-                case 3952237029: //Conversation
-                    EventTypeParams = new EventTypeParams_Conversation();
-                    break;
-                case 1536918290: //ConversationIdle
-                    EventTypeParams = new EventTypeParams_ConversationIdle();
-                    break;
                 case 244962479: //Dash
                 case 4126739186: //ForwardChangeSpeed
                 case 368586264: //move
@@ -234,22 +262,57 @@ namespace RouteSetTool
                 case 591731182: //Walk
                 case 3641577009: //RelaxedStandWalkAct
                 case 1472482162: //RelaxedWalkAct
-                    EventTypeParams = new EventTypeParams__common_SpeedInt();
+                    Param0 = new EventParamInt();
+                    Param1 = new EventParamInt();
+                    Param2 = new EventParamInt();
+                    Param3 = new EventParamInt();
+                    break;
+                case 4019510599: //RelaxedIdleAct
+                case 2973097149: //CautionIdleAct
+                    Param0 = new EventParamStrCode32();
+                    //RelaxedIdleAct 4b2d/19245 along with 496717012/StandActNormal in s10030, doesn't seem like a 64 bit leftover
+                    Param1 = new EventParamInt();
+                    Param2 = new EventParamInt();
+                    Param3 = new EventParamInt();
+                    break;
+                case 3952237029: //Conversation
+                    Param0 = new EventParamStrCode32();
+                    Param1 = new EventParamInt();//strcode64 leftover
+                    Param2 = new EventParamStrCode32();
+                    Param3 = new EventParamInt();//strcode64 leftover
+                    break;
+                case 1536918290: //ConversationIdle
+                    Param0 = new EventParamStrCode32();
+                    Param1 = new EventParamStrCode32();
+                    Param2 = new EventParamInt();//strcode64 leftover
+                    Param3 = new EventParamInt();
                     break;
                 case 3100429757: //DropPoint
                 case 3396619717: //Hovering
-                    EventTypeParams = new EventTypeParams__common_heli();
+                    Param0 = new EventParamInt();
+                    Param1 = new EventParamUInt();
+                    Param2 = new EventParamUInt();
+                    Param3 = new EventParamUInt();
                     break;
                 case 2829631605: //PutHostageInVehicle
                 case 2481191805: //TakeHostageOutOfVehicle
                 case 2265318157: //SendMessage
-                    EventTypeParams = new EventTypeParams_SendMessage();
+                    Param0 = new EventParamInt();//strcode64 leftover
+                    Param1 = new EventParamStrCode32();
+                    Param2 = new EventParamStrCode32();
+                    Param3 = new EventParamInt();//strcode64 leftover
                     break;
                 case 385624276: //SwitchRoute
-                    EventTypeParams = new EventTypeParams_SwitchRoute();
+                    Param0 = new EventParamStrCode32();//strcode64 leftover
+                    Param1 = new EventParamStrCode32();
+                    Param2 = new EventParamStrCode32();
+                    Param3 = new EventParamInt();//never used; second argument exists in lua, TODO check
                     break;
                 case 3369952648: //SyncRoute
-                    EventTypeParams = new EventTypeParams_SyncRoute();
+                    Param0 = new EventParamStrCode32();//TppEnemy.OnAllocate missionTable.enemy.syncRouteTable SyncRouteManager s10150_enemy02
+                    Param1 = new EventParamUInt();//step index
+                    Param2 = new EventParamInt();
+                    Param3 = new EventParamInt();
                     break;
                 case 370178288: //VehicleBackFast
                 case 3157073279: //VehicleBackNormal
@@ -258,7 +321,10 @@ namespace RouteSetTool
                 case 4258228081: //VehicleMoveNormal
                 case 3297759236: //VehicleMoveSlow
                 case 41204288: //
-                    EventTypeParams = new EventTypeParams__common_Vehicle();
+                    Param0 = new EventParamStrCode32();//.frl/.frld rail name hash
+                    Param1 = new EventParamInt();//RPM
+                    Param2 = new EventParamUInt();
+                    Param3 = new EventParamUInt();
                     break;
                     //41204288
             }

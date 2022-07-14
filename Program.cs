@@ -21,6 +21,8 @@ namespace RouteSetTool
 
         // -version 3 e20010_area02.frt.xml
         private const string ArgVersion = "version";
+        // -convertevent e20010_area02.frt.xml
+        private const string ArgEventConvert = "convertevent";
         // -whitelist whitelist.txt f30010.frt
         private const string ArgWhiteList = "whitelist";
         // -combine result.frt afgh_sovietBase_enemy.frt afgh_sovietSouth_enemy.frt
@@ -54,63 +56,68 @@ namespace RouteSetTool
             var whiteListName = "";
             var combineOn = false;
             var combineName = "";
+            var convertEventOn = false;
 
             foreach (string arg in args)
             {
-                if (File.Exists(arg))
+
+                //arguments
+                if (versionOn)
                 {
-                    if (whiteListOn)
+                    int.TryParse(arg, out version);
+                    versionOn = false;
+                    //Console.WriteLine($"Version {arg} detected, use ver {version}");
+                    continue;
+                }
+                else if (combineOn)
+                {
+                    combineName = arg;
+                    //Console.WriteLine($"Combining into {arg}");
+                    if (Path.GetExtension(combineName) == null)
                     {
-                        if (File.Exists(GetPathNearApp(arg)))
-                        {
-                            Console.WriteLine($"Whitelist {arg} detected");
-                            whiteListName = GetPathNearApp(arg);
-                            whiteListOn = false;
-                        }
+                        combineName += ".frt";
                     }
-                    else
+                    combineOn = false;
+                    continue;
+                }
+                else if (whiteListOn)
+                {
+                    if (File.Exists(GetPathNearApp(arg)))
                     {
-                        //paths
-                        paths.Add(arg);
-                        Console.WriteLine($"Adding {arg} to read list...");
+                        //Console.WriteLine($"Whitelist {arg} detected");
+                        whiteListName = GetPathNearApp(arg);
+                        whiteListOn = false;
+                        continue;
                     }
                 }
                 else
                 {
-                    //arguments
-                    if (versionOn)
-                    {
-                        int.TryParse(arg, out version);
-                        versionOn = false;
-                        Console.WriteLine($"Version {arg} detected, use ver {version}");
-                        continue;
-                    }
-
-                    if (combineOn)
-                    {
-                        combineName = arg;
-                        if (Path.GetExtension(combineName)==null)
-                        {
-                            combineName += ".frt";
-                        }
-                        continue;
-                    }
-
                     switch (arg.ToLower())
                     {
-                        default:
-                            break;
-                        case "-"+ArgVersion:
-                            Console.WriteLine("Version arg detected");
+                        case "-" + ArgVersion:
+                            //Console.WriteLine("Version arg detected");
                             versionOn = true;
                             break;
                         case "-" + ArgWhiteList:
-                            Console.WriteLine("Whitelist arg detected");
+                            //Console.WriteLine("Whitelist arg detected");
                             whiteListOn = true;
                             break;
                         case "-" + ArgCombine:
+                            //Console.WriteLine("Combine arg detected");
                             combineOn = true;
                             break;
+                        case "-" + ArgEventConvert:
+                            //Console.WriteLine("Event convert arg detected");
+                            convertEventOn = true;
+                            break;
+                    }
+
+                    if (File.Exists(arg))
+                    {
+                        //paths
+                        paths.Add(arg);
+                        //Console.WriteLine($"Adding {arg} to read list...");
+                        continue;
                     }
                 }
             }
@@ -122,28 +129,32 @@ namespace RouteSetTool
                 if (Path.GetExtension(path)==".frt")
                 {
                     RouteSet frt = ReadFrt(path, hashManager.StrCode32LookupTable, hashManager.OnHashIdentified);
+
+                    if (convertEventOn)
+                        frt.EventTypesGzToTpp();
+
                     if (whiteListName != "")
                     {
-                        Console.WriteLine("Whitelisting...");
+                        //Console.WriteLine("Whitelisting...");
                         frt.WhiteList(GetWhiteList(whiteListName));
                     }
 
                     if (combineName != "")
-                    {
                         foreach (Route route in frt.Routes)
                             totalRouteList.Add(route);
-                    }
 
                     if (combineName=="")
-                        if (frt.Routes.Count > 0)
-                            WriteXml(frt, Path.GetFileNameWithoutExtension(path) + ".frt.xml");
+                        WriteXml(frt, Path.GetFileNameWithoutExtension(path) + ".frt.xml");
                 }
                 else if (Path.GetExtension(path)==".xml")
                 {
                     RouteSet frt = ReadXml(path);
+
+                    if (convertEventOn)
+                        frt.EventTypesGzToTpp();
+
                     //wip
                     if (version > 0)
-                    {
                         switch (version)
                         {
                             case (int)RouteSetVersion.GZ:
@@ -151,25 +162,18 @@ namespace RouteSetTool
                                 break;
                             case (int)RouteSetVersion.TPP:
                                 frt.FileVersion = RouteSetVersion.TPP;
-                                frt.EventTypesGzToTpp();
                                 break;
                         }
-                    }
 
                     if (whiteListName != "")
-                    {
                         frt.WhiteList(GetWhiteList(whiteListName));
-                    }
 
                     if (combineName != "")
-                    {
                         foreach (Route route in frt.Routes)
                             totalRouteList.Add(route);
-                    }
 
                     if (combineName == "")
-                        if (frt.Routes.Count>0)
-                            WriteFrt(Path.GetFileNameWithoutExtension(path), frt);
+                        WriteFrt(Path.GetFileNameWithoutExtension(path), frt);
                 }
 
                 /*
@@ -187,7 +191,14 @@ namespace RouteSetTool
             if (combineName != "")
             {
                 RouteSet frt = new RouteSet() { Routes = totalRouteList };
-                WriteXml(frt, combineName);
+                if (Path.GetExtension(combineName) == ".xml")
+                {
+                    WriteXml(frt, combineName);
+                }
+                else
+                {
+                    WriteFrt(combineName, frt);
+                }
             }
 
             //Console.Read();//DEBUG Hold Console
@@ -280,14 +291,14 @@ namespace RouteSetTool
                     if (uint.TryParse(line, out uint maybeHash))
                     {
                         hash.HashValue = maybeHash;
-                        Console.WriteLine($"Inited {hash.HashValue} to list");
+                        //Console.WriteLine($"Inited {hash.HashValue} to list");
                     }
                     else
                     {
                         hash.StringLiteral = line;
 
                         hash.HashValue = HashManager.StrCode32(hash.StringLiteral);
-                        Console.WriteLine($"Inited {hash.StringLiteral} to list");
+                        //Console.WriteLine($"Inited {hash.StringLiteral} to list");
                     }
                     whiteList.Add(hash.HashValue);
                 }
