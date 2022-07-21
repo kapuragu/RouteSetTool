@@ -452,10 +452,14 @@ namespace RouteSetTool
                 loopIndex++;
             }
 
+            List<uint> addedRouteNames = new List<uint>();
             List<Route> newRoutes = new List<Route>();
             foreach (Route route in Routes)
-                if (whitelist.Contains(route.Name.HashValue))
+                if (whitelist.Contains(route.Name.HashValue)&!addedRouteNames.Contains(route.Name.HashValue))
+                {
+                    addedRouteNames.Add(route.Name.HashValue);
                     newRoutes.Add(route);
+                }
             Routes = newRoutes;
         }
         public List<uint> GetWhiteListRoutes(List<uint> routeHashes)

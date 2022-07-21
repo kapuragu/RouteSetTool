@@ -122,6 +122,7 @@ namespace RouteSetTool
                 }
             }
 
+            List<uint> totalRouteNames = new List<uint>();
             List<Route> totalRouteList = new List<Route>();
 
             foreach (string path in paths)
@@ -141,7 +142,13 @@ namespace RouteSetTool
 
                     if (combineName != "")
                         foreach (Route route in frt.Routes)
-                            totalRouteList.Add(route);
+                        {
+                            if (!totalRouteNames.Contains(route.Name.HashValue))
+                            {
+                                totalRouteNames.Add(route.Name.HashValue);
+                                totalRouteList.Add(route);
+                            }    
+                        }
 
                     if (combineName=="")
                         WriteXml(frt, Path.GetFileNameWithoutExtension(path) + ".frt.xml");
@@ -172,8 +179,16 @@ namespace RouteSetTool
                         frt.WhiteList(GetWhiteList(whiteListName));
 
                     if (combineName != "")
+                    {
                         foreach (Route route in frt.Routes)
-                            totalRouteList.Add(route);
+                        {
+                            if (!totalRouteNames.Contains(route.Name.HashValue))
+                            {
+                                totalRouteNames.Add(route.Name.HashValue);
+                                totalRouteList.Add(route);
+                            }
+                        }
+                    }
 
                     if (combineName == "")
                         WriteFrt(Path.GetFileNameWithoutExtension(path), frt);
