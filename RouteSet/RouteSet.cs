@@ -397,6 +397,8 @@ namespace RouteSetTool
 
         public void WriteXml(XmlWriter writer)
         {
+            Routes = Routes.OrderBy(route => route.Name.StringLiteral).ToList();
+
             writer.WriteStartElement("routeSet");
             foreach (Route route in Routes)
                 route.WriteXml(writer);
