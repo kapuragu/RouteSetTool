@@ -137,6 +137,8 @@ namespace RouteSetTool
         }
         public void Write(BinaryWriter writer)
         {
+            Routes=Routes.OrderBy(route => route.Name.HashValue).ToList();
+
             writer.Write("ROUT".ToArray());
             writer.Write((short)FileVersion);
             writer.Write((ushort)Routes.Count);
@@ -167,7 +169,6 @@ namespace RouteSetTool
 
             // ROUTE NAMES --V
             uint offsetToRouteNames = (uint)writer.BaseStream.Position;
-            Routes.OrderBy(route => route.Name.HashValue);
             foreach (Route route in Routes)
                 route.Name.Write(writer);
             // ROUTE NAMES --^
