@@ -27,7 +27,8 @@ namespace RouteSetTool
                 if (zero != 0)
                 {
                     //Console.WriteLine($"Padding @{reader.BaseStream.Position} isn't zero!!!");
-                    throw new Exception();
+                    //throw new Exception();
+                    Console.WriteLine($"@{reader.BaseStream.Position}!=0");
                 }
             }
         } //WriteZeroes

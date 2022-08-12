@@ -114,6 +114,7 @@ namespace RouteSetTool
                         throw new Exception($"@{reader.BaseStream.Position} Edge event isn't edge event!!!");
                     }
                     node.EdgeEvent = edgeEvent;
+                    node.EdgeEvent.IsNodeEvent = false;//fixing FoxKit Route Builder output
                     globalEventIndex++;
 
                     int nodeEventCount = eventNodeCount - 1;
@@ -127,7 +128,8 @@ namespace RouteSetTool
                             //changed from exception to log warning cause it's no biggie for the game
                             //Console.WriteLine($"@{reader.BaseStream.Position} WARNING!!! Node event isn't node event!!!");
                         }
-                        node.NodeEvents.Add(nodeEvent);
+                        nodeEvent.IsNodeEvent = true;
+                        node.NodeEvents.Add(nodeEvent);//fixing FoxKit Route Builder output
                         globalEventIndex++;
                     }
                     route.Nodes.Add(node);
