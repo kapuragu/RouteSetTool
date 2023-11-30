@@ -24,7 +24,7 @@ namespace RouteSetTool
 
         public bool IsNodeEvent = false;
         public RouteAimTargetType AimTargetType = RouteAimTargetType.ROUTE_AIM_NO_TARGET;
-        //literally never used byte
+        //<-literally never used byte
         public bool IsLoop = false;
 
         public ushort Time = 0;
@@ -66,8 +66,6 @@ namespace RouteSetTool
                 //IsNodeEvent = IsEdgeEvent == 0; //-1 = true, 0 = false
                 reader.ReadZeroes(3);
             }
-
-            //Console.WriteLine($"@{reader.BaseStream.Position} Time: {Time}, direction: {Dir}");
 
             switch (AimTargetType)
             {
@@ -228,6 +226,9 @@ namespace RouteSetTool
         {
             switch (reader.Name)
             {
+                default:
+                    AimTargetType = RouteAimTargetType.ROUTE_AIM_NO_TARGET;
+                    return new AimNone();
                 case "staticPoint":
                     AimTargetType = RouteAimTargetType.ROUTE_AIM_STATIC_POINT;
                     return new AimStaticPoint();
@@ -240,9 +241,6 @@ namespace RouteSetTool
                 case "routeAsObject":
                     AimTargetType = RouteAimTargetType.ROUTE_AIM_ROUTE_AS_OBJECT;
                     return new AimRouteAsObject();
-                default:
-                    AimTargetType = RouteAimTargetType.ROUTE_AIM_NO_TARGET;
-                    return new AimNone();
             }
         }
         public IEventParam SetEventParamTypeReadXml(XmlReader reader)
@@ -333,13 +331,12 @@ namespace RouteSetTool
                 case 3487140098: //VehicleMoveFast
                 case 4258228081: //VehicleMoveNormal
                 case 3297759236: //VehicleMoveSlow
-                case 41204288: //
+                case 41204288: //VehicleDir
                     Param0 = new EventParamStrCode32();//.frl/.frld rail name hash
                     Param1 = new EventParamInt();//RPM
                     Param2 = new EventParamUInt();
                     Param3 = new EventParamUInt();
                     break;
-                    //41204288
             }
         }
     }
