@@ -2,8 +2,6 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Xml;
 using System.Xml.Schema;
 using System.Xml.Serialization;
@@ -298,7 +296,8 @@ namespace RouteSetTool
             writer.BaseStream.Position = toWrite_offsetToRouteEvents;
             writer.Write(offsetToRouteEvents);
         }
-        public Vector3 GetOrigin()
+
+        private Vector3 GetOrigin()
         {
             Vector3 ave = new Vector3();
             List<float> xList = new List<float>();

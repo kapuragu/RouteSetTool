@@ -1,0 +1,20 @@
+{
+    "RelaxedIdleAct":["String","Int","Int","Int"],
+    "CautionIdleAct":["String","Int","Int","Int"],
+    "Conversation":["String","Int","String","Int"],
+    "ConversationIdle":["String","String","Int","Int"],
+    "DropPoint":["Int","UInt","UInt","UInt"],
+    "Hovering":["Int","UInt","UInt","UInt"],
+    "PutHostageInVehicle":["Int","String","String","Int"],
+    "TakeHostageOutOfVehicle":["Int","String","String","Int"],
+    "SendMessage":["Int","String","String","Int"],
+    "SwitchRoute":["String","String","String","Int"],
+    "SyncRoute":["String","UInt","Int","Int"],
+    "VehicleBackFast":["String","Int","UInt","UInt"],
+    "VehicleBackNormal":["String","Int","UInt","UInt"],
+    "VehicleBackSlow":["String","Int","UInt","UInt"],
+    "VehicleMoveFast":["String","Int","UInt","UInt"],
+    "VehicleMoveNormal":["String","Int","UInt","UInt"],
+    "VehicleMoveSlow":["String","Int","UInt","UInt"],
+    "VehicleDir":["String","Int","UInt","UInt"]
+}
