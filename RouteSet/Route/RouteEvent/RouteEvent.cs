@@ -1,12 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
+using System.Reflection;
 using System.Text;
-using System.Threading.Tasks;
 using System.Xml;
 using System.Xml.Schema;
 using System.Xml.Serialization;
+using Newtonsoft.Json;
 
 namespace RouteSetTool
 {
@@ -259,9 +259,97 @@ namespace RouteSetTool
                     return new EventParamStrCode32();
             }
         }
-        public void SetEventParamTypesByHash()
+
+        private const string RouteEventParamConfig = "route_event_param_config.json";
+        private Dictionary<string, string[]> EventParamConfig;
+
+        private void SetEventParamTypesByHash()
         {
-            switch (EventType.HashValue)
+            var buildPath = Assembly.GetExecutingAssembly().Location;
+            var configPath = Path.GetDirectoryName(buildPath) + "/" + RouteEventParamConfig;
+            if (File.Exists(configPath))
+            {
+                var configJson = File.ReadAllText(configPath);
+                EventParamConfig = JsonConvert.DeserializeObject<Dictionary<string, string[]>>(configJson);
+            }
+            else
+                return;
+
+            if (EventParamConfig == null)
+                return;
+
+            string[] eventTypes = null;
+            foreach(KeyValuePair<string, string[]> entry in EventParamConfig)
+            {
+                //Does the config use a known string?
+                if (entry.Key == EventType.StringLiteral)
+                {
+                    eventTypes = entry.Value;
+                    break;
+                }
+                //Does the config use an unknown hash?
+                if (uint.TryParse(entry.Key, out uint keyHash))
+                {
+                    if (keyHash == EventType.HashValue)
+                    {
+                        eventTypes = entry.Value;
+                        break;
+                    }
+                }
+                else
+                {
+                    //Does the config use an unknown string?
+                    if (HashManager.StrCode32(entry.Key) == EventType.HashValue) 
+                    {
+                        eventTypes = entry.Value;
+                        break;
+                    }
+                }
+            }
+
+            if (eventTypes == null)
+                return;
+
+            for (int i = 0; i < eventTypes.Length; i++)
+            {
+                IEventParam newParam;
+                switch (eventTypes[i])
+                {
+                    default:
+                    //case "Int":
+                        newParam = new EventParamInt();
+                        break;
+                    case "UInt":
+                        newParam = new EventParamUInt();
+                        break;
+                    case "String":
+                        newParam = new EventParamStrCode32();
+                        break;
+                    case "Float":
+                        newParam = new EventParamFloat();
+                        break;
+                }
+
+                switch (i)
+                {
+                    default:
+                    //case 0:
+                        Param0 = newParam;
+                        break;
+                    case 1:
+                        Param1 = newParam;
+                        break;
+                    case 2:
+                        Param2 = newParam;
+                        break;
+                    case 3:
+                        Param3 = newParam;
+                        break;
+                }
+            }
+
+
+            /*switch (EventType.HashValue)
             {
                 default:
                 case 804119634: //chase
@@ -337,7 +425,7 @@ namespace RouteSetTool
                     Param2 = new EventParamUInt();
                     Param3 = new EventParamUInt();
                     break;
-            }
+            }*/
         }
     }
 }

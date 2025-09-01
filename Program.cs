@@ -1,8 +1,6 @@
-﻿using System;
-using System.Collections.Concurrent;
+﻿using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
@@ -10,7 +8,7 @@ using System.Xml;
 
 namespace RouteSetTool
 {
-    class Program
+    static class Program
     {
         private const string RouteIdDictionary = "route_ids.txt";
         private const string RouteEventDictionary = "route_event_names.txt";
