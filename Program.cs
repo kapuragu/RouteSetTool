@@ -223,10 +223,10 @@ namespace RouteSetTool
             WriteUserStringsToFile(RouteIdUserDictionary,idUserDictionary);
             WriteUserStringsToFile(RouteEventParamUserDictionary,eventUserDictionary);
             
-            foreach(var str in idUserDictionary)
+            /*foreach(var str in idUserDictionary)
                 Console.WriteLine($"{str}");
             foreach(var str in eventUserDictionary)
-                Console.WriteLine($"{str}");
+                Console.WriteLine($"{str}");*/
 
             //Console.Read();//DEBUG Hold Console
         }
