@@ -18,9 +18,9 @@ namespace RouteSetTool
         
         public RouteSetVersion FileVersion = RouteSetVersion.TPP;
         public List<Route> Routes = new List<Route>();
-        public void Read(BinaryReader reader, Dictionary<uint, string> nameLookupTable, HashIdentifiedDelegate hashIdentifiedCallback)
+        public void Read(BinaryReader reader, HashManager hashManager, Dictionary<string,string[]> eventParamConfig)
         {
-            string ROUT = new string (reader.ReadChars(4)); if (ROUT != "ROUT") { throw new Exception($"ROUT isn't in header!!! {ROUT}"); }
+            string rout = new string (reader.ReadChars(4)); if (rout != "ROUT") { throw new Exception($"ROUT isn't in header!!! {rout}"); }
             FileVersion = (RouteSetVersion)reader.ReadInt16(); if (FileVersion != RouteSetVersion.TPP & FileVersion != RouteSetVersion.GZ) { throw new Exception("version isn't supported!!!"); }
             ushort routeCount = reader.ReadUInt16();
             //Console.WriteLine($"{ROUT} {FileVersion}: {routeCount} route(s)");
@@ -52,7 +52,7 @@ namespace RouteSetTool
 
                 reader.BaseStream.Position = offsetToRouteNames + routeIndex * 4;
                 route.Name = new FoxHash(FoxHash.Type.StrCode32);
-                route.Name.Read(reader, nameLookupTable, hashIdentifiedCallback);
+                route.Name.Read(reader, hashManager.StrCode32LookupTable, hashManager.OnHashIdentified);
                 var logName = route.Name.HashValue.ToString();
                 if (route.Name.IsStringKnown)
                     logName = route.Name.StringLiteral;
@@ -106,7 +106,7 @@ namespace RouteSetTool
                     reader.BaseStream.Position = eventsOffset + (globalEventIndex * eventLength);
                     //Console.WriteLine($"@{reader.BaseStream.Position} Edge event");
                     RouteEvent edgeEvent = new RouteEvent();
-                    edgeEvent.Read(reader, nameLookupTable, hashIdentifiedCallback, FileVersion);
+                    edgeEvent.Read(reader, hashManager, FileVersion, eventParamConfig);
                     if (edgeEvent.IsNodeEvent)
                     {
                         throw new Exception($"@{reader.BaseStream.Position} Edge event isn't edge event!!!");
@@ -120,7 +120,7 @@ namespace RouteSetTool
                     {
                         //Console.WriteLine($"@{reader.BaseStream.Position} Node event #{eventIndex}");
                         RouteEvent nodeEvent = new RouteEvent();
-                        nodeEvent.Read(reader, nameLookupTable, hashIdentifiedCallback, FileVersion);
+                        nodeEvent.Read(reader, hashManager, FileVersion,eventParamConfig);
                         if (!nodeEvent.IsNodeEvent)
                         {
                             //changed from exception to log warning cause it's no biggie for the game
@@ -498,10 +498,11 @@ namespace RouteSetTool
             }
             return newHashes;
         }
-        public List<uint> UpdateWhitelistEvent(RouteEvent routeEvent, List<uint> routeHashes)
+
+        private static List<uint> UpdateWhitelistEvent(RouteEvent routeEvent, List<uint> routeHashes)
         {
-            List<uint> newHashes = routeHashes;
-            foreach (FoxHash aimTargetRouteName in routeEvent.AimTargetTypeParams.GetRouteNames())
+            var newHashes = routeHashes;
+            foreach (var aimTargetRouteName in routeEvent.AimTargetTypeParams.GetRouteNames())
             {
                 if (!newHashes.Contains(aimTargetRouteName.HashValue))
                 {

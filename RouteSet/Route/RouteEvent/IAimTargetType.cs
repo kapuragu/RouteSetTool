@@ -9,7 +9,7 @@ namespace RouteSetTool
 {
     public interface IAimTargetType : IXmlSerializable
     {
-        void Read(BinaryReader reader, Dictionary<uint, string> nameLookupTable, HashIdentifiedDelegate hashIdentifiedCallback);
+        void Read(BinaryReader reader, HashManager hashManager);
         void Write(BinaryWriter writer);
         List<FoxHash> GetRouteNames();
     }
@@ -20,7 +20,7 @@ namespace RouteSetTool
             throw new NotImplementedException();
         }
 
-        public void Read(BinaryReader reader, Dictionary<uint, string> nameLookupTable, HashIdentifiedDelegate hashIdentifiedCallback)
+        public void Read(BinaryReader reader, HashManager hashManager)
         {
             reader.ReadZeroes(4 * 4);
         }
@@ -50,7 +50,7 @@ namespace RouteSetTool
             throw new NotImplementedException();
         }
 
-        public void Read(BinaryReader reader, Dictionary<uint, string> nameLookupTable, HashIdentifiedDelegate hashIdentifiedCallback)
+        public void Read(BinaryReader reader, HashManager hashManager)
         {
             var point = new Vector3();
             point.Read(reader);
@@ -92,10 +92,10 @@ namespace RouteSetTool
             throw new NotImplementedException();
         }
 
-        public void Read(BinaryReader reader, Dictionary<uint, string> nameLookupTable, HashIdentifiedDelegate hashIdentifiedCallback)
+        public void Read(BinaryReader reader, HashManager hashManager)
         {
             CharacterName = new FoxHash(FoxHash.Type.StrCode32);
-            CharacterName.Read(reader, nameLookupTable, hashIdentifiedCallback);
+            CharacterName.Read(reader, hashManager.StrCode32LookupTable, hashManager.OnHashIdentified);
             /*var CharacterName_printString = CharacterName.HashValue.ToString();
             if (CharacterName.IsStringKnown)
                 CharacterName_printString = CharacterName.StringLiteral;
@@ -139,12 +139,12 @@ namespace RouteSetTool
             throw new NotImplementedException();
         }
 
-        public void Read(BinaryReader reader, Dictionary<uint, string> nameLookupTable, HashIdentifiedDelegate hashIdentifiedCallback)
+        public void Read(BinaryReader reader, HashManager hashManager)
         {
-            for (int index = 0; index < 4; index++)
+            for (var index = 0; index < 4; index++)
             {
                 RouteNames[index] = new FoxHash(FoxHash.Type.StrCode32);
-                RouteNames[index].Read(reader, nameLookupTable, hashIdentifiedCallback);
+                RouteNames[index].Read(reader, hashManager.StrCode32LookupTable, hashManager.OnHashIdentified);
                 /*var routeNameToLog = RouteNames[index].HashValue.ToString();
                 if (RouteNames[index].IsStringKnown)
                     routeNameToLog = RouteNames[index].StringLiteral;
@@ -155,7 +155,7 @@ namespace RouteSetTool
         public void ReadXml(XmlReader reader)
         {
             reader.ReadStartElement("routeAsSightMovePath");
-            for (int index = 0; index < 4; index++)
+            for (var index = 0; index < 4; index++)
             {
                 reader.ReadStartElement("routeAsSightMovePath" + index);
                 RouteNames[index] = new FoxHash(FoxHash.Type.StrCode32);
@@ -167,14 +167,14 @@ namespace RouteSetTool
 
         public void Write(BinaryWriter writer)
         {
-            foreach (FoxHash param in RouteNames)
+            foreach (var param in RouteNames)
                 param.Write(writer);
         }
 
         public void WriteXml(XmlWriter writer)
         {
             writer.WriteStartElement("routeAsSightMovePath");
-            for (int index = 0; index < 4; index++)
+            for (var index = 0; index < 4; index++)
             {
                 writer.WriteStartElement("routeAsSightMovePath" + index);
                 RouteNames[index].WriteXmlString(writer);
@@ -191,18 +191,17 @@ namespace RouteSetTool
     {
         public FoxHash[] RouteNames = new FoxHash[4]; //ROUTE_AIM_ROUTE_AS_SIGHT_MOVE_PATH/ROUTE_AIM_ROUTE_AS_OBJECT
 
-
         public XmlSchema GetSchema()
         {
             throw new NotImplementedException();
         }
 
-        public void Read(BinaryReader reader, Dictionary<uint, string> nameLookupTable, HashIdentifiedDelegate hashIdentifiedCallback)
+        public void Read(BinaryReader reader, HashManager hashManager)
         {
-            for (int index = 0; index < 4; index++)
+            for (var index = 0; index < 4; index++)
             {
                 RouteNames[index] = new FoxHash(FoxHash.Type.StrCode32);
-                RouteNames[index].Read(reader, nameLookupTable, hashIdentifiedCallback);
+                RouteNames[index].Read(reader, hashManager.StrCode32LookupTable, hashManager.OnHashIdentified);
                 /*var routeNameToLog = RouteNames[index].HashValue.ToString();
                 if (RouteNames[index].IsStringKnown)
                     routeNameToLog = RouteNames[index].StringLiteral;
@@ -213,7 +212,7 @@ namespace RouteSetTool
         public void ReadXml(XmlReader reader)
         {
             reader.ReadStartElement("routeAsObject");
-            for (int index = 0; index < 4; index++)
+            for (var index = 0; index < 4; index++)
             {
                 reader.ReadStartElement("routeAsObject" + index);
                 RouteNames[index] = new FoxHash(FoxHash.Type.StrCode32);
@@ -225,14 +224,14 @@ namespace RouteSetTool
 
         public void Write(BinaryWriter writer)
         {
-            foreach (FoxHash param in RouteNames)
+            foreach (var param in RouteNames)
                 param.Write(writer);
         }
 
         public void WriteXml(XmlWriter writer)
         {
             writer.WriteStartElement("routeAsObject");
-            for (int index = 0; index < 4; index++)
+            for (var index = 0; index < 4; index++)
             {
                 writer.WriteStartElement("routeAsObject" + index);
                 RouteNames[index].WriteXmlString(writer);

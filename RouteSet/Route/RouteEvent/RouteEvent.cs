@@ -1,12 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Reflection;
 using System.Text;
 using System.Xml;
 using System.Xml.Schema;
 using System.Xml.Serialization;
-using Newtonsoft.Json;
 
 namespace RouteSetTool
 {
@@ -43,10 +41,10 @@ namespace RouteSetTool
             throw new NotImplementedException();
         }
 
-        public void Read(BinaryReader reader, Dictionary<uint, string> nameLookupTable, HashIdentifiedDelegate hashIdentifiedCallback, RouteSetVersion version)
+        public void Read(BinaryReader reader, HashManager hashManager, RouteSetVersion version, Dictionary<string,string[]> EventParamConfig)
         {
             EventType = new FoxHash(FoxHash.Type.StrCode32);
-            EventType.Read(reader, nameLookupTable, hashIdentifiedCallback);
+            EventType.Read(reader, hashManager.StrCode32LookupTable, hashManager.OnHashIdentified);
             IsNodeEvent = reader.ReadBoolean();
             AimTargetType = (RouteAimTargetType)reader.ReadByte();
             reader.ReadZeroes(1);
@@ -86,13 +84,13 @@ namespace RouteSetTool
                     AimTargetTypeParams = new AimRouteAsObject();
                     break;
             }
-            AimTargetTypeParams.Read(reader, nameLookupTable, hashIdentifiedCallback);
+            AimTargetTypeParams.Read(reader, hashManager);
 
-            SetEventParamTypesByHash();
-            Param0.Read(reader, nameLookupTable, hashIdentifiedCallback);
-            Param1.Read(reader, nameLookupTable, hashIdentifiedCallback);
-            Param2.Read(reader, nameLookupTable, hashIdentifiedCallback);
-            Param3.Read(reader, nameLookupTable, hashIdentifiedCallback);
+            SetEventParamTypesByHash(EventParamConfig);
+            Param0.Read(reader, hashManager);
+            Param1.Read(reader, hashManager);
+            Param2.Read(reader, hashManager);
+            Param3.Read(reader, hashManager);
 
             if (version == RouteSetVersion.TPP)
             {
@@ -105,7 +103,7 @@ namespace RouteSetTool
                 byte[] str = reader.ReadBytes(4);
                 var charas = Encoding.Default.GetChars(str, 0, 4);
                 Array.Reverse(charas);
-                string snippet = charas.ToString();
+                var snippet = charas.ToString();
                 //Console.WriteLine($"@{reader.BaseStream.Position} Snippet: {BitConverter.ToUInt32(snippet, 0)}");
             }
         }
@@ -259,27 +257,13 @@ namespace RouteSetTool
                     return new EventParamStrCode32();
             }
         }
-
-        private const string RouteEventParamConfig = "route_event_param_config.json";
-        private Dictionary<string, string[]> EventParamConfig;
-
-        private void SetEventParamTypesByHash()
+        private void SetEventParamTypesByHash(Dictionary<string, string[]> eventParamConfig)
         {
-            var buildPath = Assembly.GetExecutingAssembly().Location;
-            var configPath = Path.GetDirectoryName(buildPath) + "/" + RouteEventParamConfig;
-            if (File.Exists(configPath))
-            {
-                var configJson = File.ReadAllText(configPath);
-                EventParamConfig = JsonConvert.DeserializeObject<Dictionary<string, string[]>>(configJson);
-            }
-            else
+            if (eventParamConfig == null)
                 return;
-
-            if (EventParamConfig == null)
-                return;
-
+            
             string[] eventTypes = null;
-            foreach(KeyValuePair<string, string[]> entry in EventParamConfig)
+            foreach(KeyValuePair<string, string[]> entry in eventParamConfig)
             {
                 //Does the config use a known string?
                 if (entry.Key == EventType.StringLiteral)
@@ -316,16 +300,16 @@ namespace RouteSetTool
                 switch (eventTypes[i])
                 {
                     default:
-                    //case "Int":
+                    //case "int32":
                         newParam = new EventParamInt();
                         break;
-                    case "UInt":
+                    case "uint32":
                         newParam = new EventParamUInt();
                         break;
                     case "String":
                         newParam = new EventParamStrCode32();
                         break;
-                    case "Float":
+                    case "float":
                         newParam = new EventParamFloat();
                         break;
                 }

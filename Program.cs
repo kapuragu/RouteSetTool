@@ -1,36 +1,41 @@
-﻿using System.Collections.Concurrent;
+﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using System.Xml;
+using Newtonsoft.Json;
 
 namespace RouteSetTool
 {
-    static class Program
+    internal static class Program
     {
         private const string RouteIdDictionary = "route_ids.txt";
         private const string RouteEventDictionary = "route_event_names.txt";
         private const string RouteEventMessageDictionary = "route_event_messages.txt";
         private const string RouteEventParamDictionary = "route_event_params.txt";
         private const string RouteIdUserDictionary = "route_ids_user.txt";
-        private const string RouteEventParamUserDictionary = "route_event_messages.txt";
+        private const string RouteEventParamUserDictionary = "route_event_params_user.txt";
+        private const string RouteEventParamConfig = "route_event_param_config.json";
 
         // -version 3 e20010_area02.frt.xml
         private const string ArgVersion = "version";
         // -convertevent e20010_area02.frt.xml
         private const string ArgEventConvert = "convertevent";
-        // -whitelist whitelist.txt f30010.frt
+        // -whitelist list.txt f30010.frt
         private const string ArgWhiteList = "whitelist";
         // -combine result.frt afgh_sovietBase_enemy.frt afgh_sovietSouth_enemy.frt
-        private const string ArgCombine = "combine"; 
-        static void Main(string[] args)
+        private const string ArgCombine = "combine";
+
+        private static void Main(string[] args)
         {
             var hashManager = new HashManager();
 
             // Multi-Dictionary Reading!!
-            List<string> dictionaryNames = new List<string>
+            var dictionaryNames = new List<string>
             {
                 RouteIdDictionary,
                 RouteEventDictionary,
@@ -39,14 +44,17 @@ namespace RouteSetTool
                 RouteIdUserDictionary,
                 RouteEventParamUserDictionary,
             };
-            List<string> strCodeDictionaries = new List<string>();
-            foreach (var dictionaryPath in dictionaryNames)
-                if (File.Exists(GetPathNearApp(dictionaryPath)))
-                    strCodeDictionaries.Add(GetPathNearApp(dictionaryPath));
+            var strCodeDictionaries = (from dictionaryPath in dictionaryNames 
+                where File.Exists(GetPathNearApp(dictionaryPath)) select GetPathNearApp(dictionaryPath)).ToList();
 
             hashManager.StrCode32LookupTable = MakeStrCode32HashLookupTableFromFiles(strCodeDictionaries);
 
-            List<string> paths = new List<string>();
+            var eventParamConfig = GetEventParamConfig();
+
+            var idUserDictionary = new List<string>();
+            var eventUserDictionary = new List<string>();
+            
+            var paths = new List<string>();
 
             var versionOn = false;
             var version = 0;
@@ -56,7 +64,7 @@ namespace RouteSetTool
             var combineName = "";
             var convertEventOn = false;
 
-            foreach (string arg in args)
+            foreach (var arg in args)
             {
 
                 //arguments
@@ -65,7 +73,6 @@ namespace RouteSetTool
                     int.TryParse(arg, out version);
                     versionOn = false;
                     //Console.WriteLine($"Version {arg} detected, use ver {version}");
-                    continue;
                 }
                 else if (combineOn)
                 {
@@ -76,17 +83,14 @@ namespace RouteSetTool
                         combineName += ".frt";
                     }
                     combineOn = false;
-                    continue;
                 }
                 else if (whiteListOn)
                 {
-                    if (File.Exists(GetPathNearApp(arg)))
-                    {
-                        //Console.WriteLine($"Whitelist {arg} detected");
-                        whiteListName = GetPathNearApp(arg);
-                        whiteListOn = false;
-                        continue;
-                    }
+                    if (!File.Exists(GetPathNearApp(arg))) continue;
+                    
+                    //Console.WriteLine($"Whitelist {arg} detected");
+                    whiteListName = GetPathNearApp(arg);
+                    whiteListOn = false;
                 }
                 else
                 {
@@ -110,86 +114,84 @@ namespace RouteSetTool
                             break;
                     }
 
-                    if (File.Exists(arg))
-                    {
-                        //paths
-                        paths.Add(arg);
-                        //Console.WriteLine($"Adding {arg} to read list...");
-                        continue;
-                    }
+                    if (!File.Exists(arg)) continue;
+                    //paths
+                    paths.Add(arg);
+                    //Console.WriteLine($"Adding {arg} to read list...");
                 }
             }
 
-            List<uint> totalRouteNames = new List<uint>();
-            List<Route> totalRouteList = new List<Route>();
+            var totalRouteNames = new List<uint>();
+            var totalRouteList = new List<Route>();
 
-            foreach (string path in paths)
+            foreach (var path in paths)
             {
-                if (Path.GetExtension(path)==".frt")
+                switch (Path.GetExtension(path))
                 {
-                    RouteSet frt = ReadFrt(path, hashManager.StrCode32LookupTable, hashManager.OnHashIdentified);
-
-                    if (convertEventOn)
-                        frt.EventTypesGzToTpp();
-
-                    if (whiteListName != "")
+                    case ".frt":
                     {
-                        //Console.WriteLine("Whitelisting...");
-                        frt.WhiteList(GetWhiteList(whiteListName));
-                    }
+                        var frt = ReadFrt(path, hashManager, eventParamConfig);
 
-                    if (combineName != "")
-                        foreach (Route route in frt.Routes)
+                        if (convertEventOn)
+                            frt.EventTypesGzToTpp();
+
+                        if (whiteListName != "")
                         {
-                            if (!totalRouteNames.Contains(route.Name.HashValue))
+                            //Console.WriteLine("Whitelisting...");
+                            frt.WhiteList(GetWhiteList(whiteListName));
+                        }
+
+                        if (combineName != "")
+                            foreach (var route in frt.Routes.Where(route => !totalRouteNames.Contains(route.Name.HashValue)))
                             {
                                 totalRouteNames.Add(route.Name.HashValue);
                                 totalRouteList.Add(route);
-                            }    
-                        }
+                            }
 
-                    if (combineName=="")
-                        WriteXml(frt, Path.GetFileNameWithoutExtension(path) + ".frt.xml");
-                }
-                else if (Path.GetExtension(path)==".xml")
-                {
-                    RouteSet frt = ReadXml(path);
-
-                    if (convertEventOn)
-                        frt.EventTypesGzToTpp();
-
-                    if (version > 0)
-                        switch (version)
-                        {
-                            case (int)RouteSetVersion.GZ:
-                                frt.FileVersion = RouteSetVersion.GZ;
-                                break;
-                            case (int)RouteSetVersion.TPP:
-                                frt.FileVersion = RouteSetVersion.TPP;
-                                break;
-                        }
-                    else
-                    {
-                        frt.FileVersion = RouteSetVersion.TPP;
+                        if (combineName=="")
+                            WriteXml(frt, Path.GetFileNameWithoutExtension(path) + ".frt.xml");
+                        break;
                     }
-
-                    if (whiteListName != "")
-                        frt.WhiteList(GetWhiteList(whiteListName));
-
-                    if (combineName != "")
+                    case ".xml":
                     {
-                        foreach (Route route in frt.Routes)
+                        var frt = ReadXml(path);
+
+                        CollectUserStrings(frt,hashManager,idUserDictionary,eventUserDictionary);
+
+                        if (convertEventOn)
+                            frt.EventTypesGzToTpp();
+
+                        if (version > 0)
+                            switch (version)
+                            {
+                                case (int)RouteSetVersion.GZ:
+                                    frt.FileVersion = RouteSetVersion.GZ;
+                                    break;
+                                case (int)RouteSetVersion.TPP:
+                                    frt.FileVersion = RouteSetVersion.TPP;
+                                    break;
+                            }
+                        else
                         {
-                            if (!totalRouteNames.Contains(route.Name.HashValue))
+                            frt.FileVersion = RouteSetVersion.TPP;
+                        }
+
+                        if (whiteListName != "")
+                            frt.WhiteList(GetWhiteList(whiteListName));
+
+                        if (combineName != "")
+                        {
+                            foreach (var route in frt.Routes.Where(route => !totalRouteNames.Contains(route.Name.HashValue)))
                             {
                                 totalRouteNames.Add(route.Name.HashValue);
                                 totalRouteList.Add(route);
                             }
                         }
-                    }
 
-                    if (combineName == "")
-                        WriteFrt(Path.GetFileNameWithoutExtension(path), frt);
+                        if (combineName == "")
+                            WriteFrt(Path.GetFileNameWithoutExtension(path), frt);
+                        break;
+                    }
                 }
 
                 /*
@@ -204,43 +206,55 @@ namespace RouteSetTool
                 WriteFrt(newPath, frt);
                 */
             }
+
             if (combineName != "")
             {
-                RouteSet frt = new RouteSet() { Routes = totalRouteList };
+                var combinedFrt = new RouteSet() { Routes = totalRouteList };
                 if (Path.GetExtension(combineName) == ".xml")
                 {
-                    WriteXml(frt, combineName);
+                    WriteXml(combinedFrt, combineName);
                 }
                 else
                 {
-                    WriteFrt(combineName, frt);
+                    WriteFrt(combineName, combinedFrt);
                 }
             }
 
+            WriteUserStringsToFile(RouteIdUserDictionary,idUserDictionary);
+            WriteUserStringsToFile(RouteEventParamUserDictionary,eventUserDictionary);
+            
+            foreach(var str in idUserDictionary)
+                Console.WriteLine($"{str}");
+            foreach(var str in eventUserDictionary)
+                Console.WriteLine($"{str}");
+
             //Console.Read();//DEBUG Hold Console
         }
-        public static RouteSet ReadFrt(string path, Dictionary<uint, string> nameLookupTable, HashIdentifiedDelegate hashIdentifiedCallback)
+
+        private static RouteSet ReadFrt(string path, HashManager hashManager, Dictionary<string,string[]> eventParamConfig)
         {
-            using (BinaryReader reader = new BinaryReader(new FileStream(path, FileMode.Open)))
+            using (var reader = new BinaryReader(new FileStream(path, FileMode.Open)))
             {
-                RouteSet frt = new RouteSet();
-                frt.Read(reader, nameLookupTable, hashIdentifiedCallback);
+                var frt = new RouteSet();
+                frt.Read(reader, hashManager, eventParamConfig);
                 return frt;
             }
         }
-        public static void WriteFrt(string path, RouteSet frt)
+
+        private static void WriteFrt(string path, RouteSet frt)
         {
-            using (BinaryWriter writer = new BinaryWriter(new FileStream(path, FileMode.Create)))
+            using (var writer = new BinaryWriter(new FileStream(path, FileMode.Create)))
             {
                 frt.Write(writer);
             }
         }
-        public static void WriteXml(RouteSet frt, string path)
+
+        private static void WriteXml(RouteSet frt, string path)
         {
-            XmlWriterSettings xmlWriterSettings = new XmlWriterSettings()
+            var xmlWriterSettings = new XmlWriterSettings()
             {
                 Encoding = Encoding.UTF8,
-                Indent = true
+                Indent = true,
             };
             using (var writer = XmlWriter.Create(path, xmlWriterSettings))
             {
@@ -248,14 +262,15 @@ namespace RouteSetTool
             }
         }
 
-        public static RouteSet ReadXml(string path)
+        private static RouteSet ReadXml(string path)
         {
-            XmlReaderSettings xmlReaderSettings = new XmlReaderSettings
+            var xmlReaderSettings = new XmlReaderSettings
             {
-                IgnoreWhitespace = true
+                IgnoreWhitespace = true,
+                IgnoreComments = true,
             };
 
-            RouteSet frt = new RouteSet();
+            var frt = new RouteSet();
             using (var reader = XmlReader.Create(path, xmlReaderSettings))
             {
                 frt.ReadXml(reader);
@@ -264,13 +279,13 @@ namespace RouteSetTool
         }
         private static Dictionary<uint, string> MakeStrCode32HashLookupTableFromFiles(List<string> paths)
         {
-            ConcurrentDictionary<uint, string> table = new ConcurrentDictionary<uint, string>();
+            var table = new ConcurrentDictionary<uint, string>();
 
             // Read file
-            List<string> stringLiterals = new List<string>();
+            var stringLiterals = new List<string>();
             foreach (var dictionary in paths)
             {
-                using (StreamReader file = new StreamReader(dictionary))
+                using (var file = new StreamReader(dictionary))
                 {
                     // TODO multi-thread
                     string line;
@@ -282,29 +297,31 @@ namespace RouteSetTool
             }
 
             // Hash entries
-            Parallel.ForEach(stringLiterals, (string entry) =>
+            Parallel.ForEach(stringLiterals, entry =>
             {
-                uint hash = HashManager.StrCode32(entry);
+                var hash = HashManager.StrCode32(entry);
                 table.TryAdd(hash, entry);
             });
 
             return new Dictionary<uint, string>(table);
         }
-        public static string GetPathNearApp(string name)
+
+        private static string GetPathNearApp(string name)
         {
             return Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) + "/" + name;
         }
-        public static List<uint> GetWhiteList(string path)
+
+        private static List<uint> GetWhiteList(string path)
         {
-            List<uint> whiteList = new List<uint>();
-            using (StreamReader file = new StreamReader(path))
+            var whiteList = new List<uint>();
+            using (var file = new StreamReader(path))
             {
                 // TODO multi-thread
                 string line;
                 while ((line = file.ReadLine()) != null)
                 {
-                    FoxHash hash = new FoxHash(FoxHash.Type.StrCode32);
-                    if (uint.TryParse(line, out uint maybeHash))
+                    var hash = new FoxHash(FoxHash.Type.StrCode32);
+                    if (uint.TryParse(line, out var maybeHash))
                     {
                         hash.HashValue = maybeHash;
                         //Console.WriteLine($"Inited {hash.HashValue} to list");
@@ -320,6 +337,93 @@ namespace RouteSetTool
                 }
             }
             return whiteList;
+        }
+
+        private static Dictionary<string, string[]> GetEventParamConfig()
+        {
+            var configPath = GetPathNearApp(RouteEventParamConfig);
+            
+            if (!File.Exists(configPath)) return null;
+            
+            var configJson = File.ReadAllText(configPath);
+            return JsonConvert.DeserializeObject<Dictionary<string, string[]>>(configJson);
+        }
+
+        private static void CollectUserStrings(RouteSet frt, HashManager hashManager, List<string> idUserDictionary, List<string> eventUserDictionary)
+        {
+            foreach (var route in frt.Routes)
+            {
+                if (IsUserString(route.Name, hashManager))
+                {
+                    idUserDictionary.Add(route.Name.StringLiteral);
+                }
+
+                foreach (var node in route.Nodes)
+                {
+                    var aimTargetHash = GetAimEventHashParam(node.EdgeEvent.AimTargetTypeParams);
+                    if (aimTargetHash!=null)
+                        eventUserDictionary.Add(aimTargetHash);
+                    idUserDictionary.AddRange(from routeId in node.EdgeEvent.AimTargetTypeParams.GetRouteNames() 
+                        where IsUserString(routeId, hashManager) select routeId.StringLiteral);
+                    var param0 = GetEventHashParam(node.EdgeEvent.Param0, hashManager);
+                    if (param0!=null)
+                        eventUserDictionary.Add(param0);
+                    var param1 = GetEventHashParam(node.EdgeEvent.Param1, hashManager);
+                    if (param1!=null)
+                        eventUserDictionary.Add(param1);
+                    var param2 = GetEventHashParam(node.EdgeEvent.Param2, hashManager);
+                    if (param2!=null)
+                        eventUserDictionary.Add(param2);
+                    var param3 = GetEventHashParam(node.EdgeEvent.Param3, hashManager);
+                    if (param3!=null)
+                        eventUserDictionary.Add(param3);
+
+                    foreach (var nodeEvent in node.NodeEvents)
+                    {
+                        aimTargetHash = GetAimEventHashParam(nodeEvent.AimTargetTypeParams);
+                        if (aimTargetHash!=null)
+                            eventUserDictionary.Add(aimTargetHash);
+                        idUserDictionary.AddRange(from routeId in nodeEvent.AimTargetTypeParams.GetRouteNames() 
+                            where IsUserString(routeId, hashManager) select routeId.StringLiteral);
+                        param0 = GetEventHashParam(nodeEvent.Param0, hashManager);
+                        if (param0!=null)
+                            eventUserDictionary.Add(param0);
+                        param1 = GetEventHashParam(nodeEvent.Param1, hashManager);
+                        if (param1!=null)
+                            eventUserDictionary.Add(param1);
+                        param2 = GetEventHashParam(nodeEvent.Param2, hashManager);
+                        if (param2!=null)
+                            eventUserDictionary.Add(param2);
+                        param3 = GetEventHashParam(nodeEvent.Param3, hashManager);
+                        if (param3!=null)
+                            eventUserDictionary.Add(param3);
+                    }
+                }
+            }
+        }
+        private static bool IsUserString(FoxHash hash, HashManager hashManager)
+        {
+            return !string.IsNullOrEmpty(hash.StringLiteral) && !hashManager.StrCode32LookupTable.ContainsValue(hash.StringLiteral);
+        }
+
+        private static string GetEventHashParam(IEventParam eventParam, HashManager hashManager)
+        {
+            if (!(eventParam is EventParamStrCode32 param)) return null;
+            
+            return IsUserString(param.Param, hashManager) ? param.Param.StringLiteral : null;
+        }
+        private static string GetAimEventHashParam(IAimTargetType aimTargetTypeParams)
+        {
+            return aimTargetTypeParams is AimCharacter aimCharacter ? aimCharacter.CharacterName.StringLiteral : null;
+        }
+        private static void WriteUserStringsToFile(string name, List<string> userStrings)
+        {
+            userStrings.Sort(); //Sort alphabetically for neatness
+            var list = userStrings.Distinct().ToList();
+            var userDictionary = GetPathNearApp(name);
+            foreach (var userString in list)
+                using (var file = new StreamWriter(path: userDictionary, append: true))
+                    file.WriteLine(userString); //Write them into the user dictionary
         }
     }
 }

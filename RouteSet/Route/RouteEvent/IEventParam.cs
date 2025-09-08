@@ -12,7 +12,7 @@ namespace RouteSetTool
 {
     public interface IEventParam : IXmlSerializable
     {
-        void Read(BinaryReader reader, Dictionary<uint, string> nameLookupTable, HashIdentifiedDelegate hashIdentifiedCallback);
+        void Read(BinaryReader reader, HashManager hashManager);
         void Write(BinaryWriter writer);
         List<FoxHash> GetRouteNames();
     }
@@ -29,7 +29,7 @@ namespace RouteSetTool
             throw new NotImplementedException();
         }
 
-        public void Read(BinaryReader reader, Dictionary<uint, string> nameLookupTable, HashIdentifiedDelegate hashIdentifiedCallback)
+        public void Read(BinaryReader reader, HashManager hashManager)
         {
             Param = reader.ReadUInt32();
         }
@@ -65,7 +65,7 @@ namespace RouteSetTool
             throw new NotImplementedException();
         }
 
-        public void Read(BinaryReader reader, Dictionary<uint, string> nameLookupTable, HashIdentifiedDelegate hashIdentifiedCallback)
+        public void Read(BinaryReader reader, HashManager hashManager)
         {
             Param = reader.ReadInt32();
         }
@@ -101,7 +101,7 @@ namespace RouteSetTool
             throw new NotImplementedException();
         }
 
-        public void Read(BinaryReader reader, Dictionary<uint, string> nameLookupTable, HashIdentifiedDelegate hashIdentifiedCallback)
+        public void Read(BinaryReader reader, HashManager hashManager)
         {
             Param = reader.ReadSingle();
         }
@@ -137,10 +137,10 @@ namespace RouteSetTool
             throw new NotImplementedException();
         }
 
-        public void Read(BinaryReader reader, Dictionary<uint, string> nameLookupTable, HashIdentifiedDelegate hashIdentifiedCallback)
+        public void Read(BinaryReader reader, HashManager hashManager)
         {
             Param = new FoxHash(FoxHash.Type.StrCode32);
-            Param.Read(reader, nameLookupTable, hashIdentifiedCallback);
+            Param.Read(reader, hashManager.StrCode32LookupTable, hashManager.OnHashIdentified);
         }
 
         public void ReadXml(XmlReader reader)

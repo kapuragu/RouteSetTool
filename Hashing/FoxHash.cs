@@ -15,6 +15,7 @@ namespace RouteSetTool
         public uint HashValue;
         public string StringLiteral = string.Empty;
         public bool IsStringKnown => !string.IsNullOrEmpty(this.StringLiteral);
+        public uint EmptyStrCode32 = HashManager.StrCode32("");
 
         private readonly Type type;
 
@@ -66,7 +67,14 @@ namespace RouteSetTool
             }
             else
             {
-                writer.WriteAttributeString(label, HashValue.ToString(CultureInfo.InvariantCulture));
+                if (this.type==Type.StrCode32 && HashValue == EmptyStrCode32)
+                {
+                    writer.WriteAttributeString(label, "");
+                }
+                else
+                {
+                    writer.WriteAttributeString(label, HashValue.ToString(CultureInfo.InvariantCulture));
+                }
             }
         }
 
@@ -78,7 +86,14 @@ namespace RouteSetTool
             }
             else
             {
-                writer.WriteString(HashValue.ToString(CultureInfo.InvariantCulture));
+                if (this.type==Type.StrCode32 && HashValue == EmptyStrCode32)
+                {
+                    writer.WriteString("");
+                }
+                else
+                {
+                    writer.WriteString(HashValue.ToString(CultureInfo.InvariantCulture));
+                }
             }
         }
 
