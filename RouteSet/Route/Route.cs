@@ -24,7 +24,9 @@ namespace RouteSetTool
             var logName = Name.HashValue.ToString();
             if (Name.IsStringKnown)
                 logName = Name.StringLiteral;
-            //Console.WriteLine($"Id {logName}");
+#if DEBUG
+            Console.WriteLine($"Id {logName}");
+#endif
 
             reader.ReadStartElement("route");
             while (2 > 1)

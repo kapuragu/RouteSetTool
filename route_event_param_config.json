@@ -13,8 +13,8 @@
     "VehicleBackFast":["String","int32","uint32","uint32"],
     "VehicleBackNormal":["String","int32","uint32","uint32"],
     "VehicleBackSlow":["String","int32","uint32","uint32"],
+    "VehicleKmPerHour":["String","int32","uint32","uint32"],
     "VehicleMoveFast":["String","int32","uint32","uint32"],
     "VehicleMoveNormal":["String","int32","uint32","uint32"],
-    "VehicleMoveSlow":["String","int32","uint32","uint32"],
-    "41204288":["String","int32","uint32","uint32"]
+    "VehicleMoveSlow":["String","int32","uint32","uint32"]
 }

@@ -29,6 +29,8 @@ namespace RouteSetTool
         private const string ArgWhiteList = "whitelist";
         // -combine result.frt afgh_sovietBase_enemy.frt afgh_sovietSouth_enemy.frt
         private const string ArgCombine = "combine";
+        // -paramDump
+        private const string ArgParamDump = "paramDump";
 
         private static void Main(string[] args)
         {
@@ -63,6 +65,7 @@ namespace RouteSetTool
             var combineOn = false;
             var combineName = "";
             var convertEventOn = false;
+            var paramDump = false;
 
             foreach (var arg in args)
             {
@@ -72,12 +75,16 @@ namespace RouteSetTool
                 {
                     int.TryParse(arg, out version);
                     versionOn = false;
-                    //Console.WriteLine($"Version {arg} detected, use ver {version}");
+#if DEBUG
+                    Console.WriteLine($"Version {arg} detected, use ver {version}");
+#endif
                 }
                 else if (combineOn)
                 {
                     combineName = arg;
-                    //Console.WriteLine($"Combining into {arg}");
+#if DEBUG
+                    Console.WriteLine($"Combining into {arg}");
+#endif
                     if (Path.GetExtension(combineName) == null)
                     {
                         combineName += ".frt";
@@ -88,7 +95,9 @@ namespace RouteSetTool
                 {
                     if (!File.Exists(GetPathNearApp(arg))) continue;
                     
-                    //Console.WriteLine($"Whitelist {arg} detected");
+#if DEBUG
+                    Console.WriteLine($"Whitelist {arg} detected");
+#endif
                     whiteListName = GetPathNearApp(arg);
                     whiteListOn = false;
                 }
@@ -97,27 +106,43 @@ namespace RouteSetTool
                     switch (arg.ToLower())
                     {
                         case "-" + ArgVersion:
-                            //Console.WriteLine("Version arg detected");
+#if DEBUG
+                            Console.WriteLine("Version arg detected");
+#endif
                             versionOn = true;
                             break;
                         case "-" + ArgWhiteList:
-                            //Console.WriteLine("Whitelist arg detected");
+#if DEBUG
+                            Console.WriteLine("Whitelist arg detected");
+#endif
                             whiteListOn = true;
                             break;
                         case "-" + ArgCombine:
-                            //Console.WriteLine("Combine arg detected");
+#if DEBUG
+                            Console.WriteLine("Combine arg detected");
+#endif
                             combineOn = true;
                             break;
                         case "-" + ArgEventConvert:
-                            //Console.WriteLine("Event convert arg detected");
+#if DEBUG
+                            Console.WriteLine("Event convert arg detected");
+#endif
                             convertEventOn = true;
+                            break;
+                        case "-" + ArgParamDump:
+#if DEBUG
+                            Console.WriteLine("Param dump arg detected");
+#endif
+                            paramDump = true;
                             break;
                     }
 
                     if (!File.Exists(arg)) continue;
                     //paths
                     paths.Add(arg);
-                    //Console.WriteLine($"Adding {arg} to read list...");
+#if DEBUG
+                    Console.WriteLine($"Adding {arg} to read list...");
+#endif
                 }
             }
 
@@ -137,7 +162,9 @@ namespace RouteSetTool
 
                         if (whiteListName != "")
                         {
-                            //Console.WriteLine("Whitelisting...");
+#if DEBUG
+                            Console.WriteLine("Whitelisting...");
+#endif
                             frt.WhiteList(GetWhiteList(whiteListName));
                         }
 
@@ -150,6 +177,15 @@ namespace RouteSetTool
 
                         if (combineName=="")
                             WriteXml(frt, Path.GetFileNameWithoutExtension(path) + ".frt.xml");
+
+                        if (paramDump)
+                            foreach (var route in frt.Routes)
+                                foreach (var node in route.Nodes)
+                                {
+                                    WriteEventParams(node.EdgeEvent);
+                                    foreach (var nodeEvent in node.NodeEvents)
+                                        WriteEventParams(nodeEvent);
+                                }
                         break;
                     }
                     case ".xml":
@@ -223,12 +259,20 @@ namespace RouteSetTool
             WriteUserStringsToFile(RouteIdUserDictionary,idUserDictionary);
             WriteUserStringsToFile(RouteEventParamUserDictionary,eventUserDictionary);
             
+#if DEBUG
             /*foreach(var str in idUserDictionary)
                 Console.WriteLine($"{str}");
             foreach(var str in eventUserDictionary)
                 Console.WriteLine($"{str}");*/
+#endif
+            
+#if DEBUG
+            Console.WriteLine($"End of main");
+#endif
 
-            //Console.Read();//DEBUG Hold Console
+#if DEBUG
+            Console.Read();//DEBUG Hold Console
+#endif
         }
 
         private static RouteSet ReadFrt(string path, HashManager hashManager, Dictionary<string,string[]> eventParamConfig)
@@ -324,14 +368,18 @@ namespace RouteSetTool
                     if (uint.TryParse(line, out var maybeHash))
                     {
                         hash.HashValue = maybeHash;
-                        //Console.WriteLine($"Inited {hash.HashValue} to list");
+#if DEBUG
+                        Console.WriteLine($"Inited {hash.HashValue} to list");
+#endif
                     }
                     else
                     {
                         hash.StringLiteral = line;
 
                         hash.HashValue = HashManager.StrCode32(hash.StringLiteral);
-                        //Console.WriteLine($"Inited {hash.StringLiteral} to list");
+#if DEBUG
+                        Console.WriteLine($"Inited {hash.StringLiteral} to list");
+#endif
                     }
                     whiteList.Add(hash.HashValue);
                 }
@@ -424,6 +472,73 @@ namespace RouteSetTool
             foreach (var userString in list)
                 using (var file = new StreamWriter(path: userDictionary, append: true))
                     file.WriteLine(userString); //Write them into the user dictionary
+        }
+        private static void WriteEventParams(RouteEvent routeEvent)
+        {
+            string eventTypeName = routeEvent.EventType.IsStringKnown ? routeEvent.EventType.StringLiteral : routeEvent.EventType.HashValue.ToString();
+            switch (routeEvent.AimTargetTypeParams)
+            {
+                case AimCharacter AimTargetCharacterParams:
+                    WriteParamToFile(eventTypeName+"_AimTargetCharacter", 0, AimTargetCharacterParams.CharacterName.HashValue.ToString());
+                    break;
+                case AimRouteAsSightMovePath AimTargetRouteAsSightMovePath:
+                    for (byte index = 0; index < 4; index++)
+                    {
+                        WriteParamToFile(eventTypeName+"_AimTargetRouteAsSightMovePath", index, AimTargetRouteAsSightMovePath.RouteNames[index].HashValue.ToString());
+                    }
+                    break;
+                case AimRouteAsObject AimTargetRouteAsObject:
+                    for (byte index = 0; index < 4; index++)
+                    {
+                        WriteParamToFile(eventTypeName+"_AimTargetRouteAsObject", index, AimTargetRouteAsObject.RouteNames[index].HashValue.ToString());
+                    }
+                    break;
+            }
+
+            void writeParam(IEventParam param, byte index)
+            {
+                switch (param)
+                {
+                    case EventParamInt paramInt:
+                        WriteParamToFile(eventTypeName, index, BitConverter.ToUInt32(BitConverter.GetBytes(paramInt.Param),0).ToString());
+                        break;
+                    case EventParamUInt paramUInt:
+                        WriteParamToFile(eventTypeName, index, paramUInt.Param.ToString());
+                        break;
+                    case EventParamStrCode32 paramStrCode32:
+                        WriteParamToFile(eventTypeName, index, paramStrCode32.Param.HashValue.ToString());
+                        break;
+                    case EventParamFloat paramFloat:
+                        WriteParamToFile(eventTypeName, index, BitConverter.ToUInt32(BitConverter.GetBytes(paramFloat.Param),0).ToString());
+                        break;
+                }
+            }
+
+            writeParam(routeEvent.Param0, 0);
+            writeParam(routeEvent.Param1, 1);
+            writeParam(routeEvent.Param2, 2);
+            writeParam(routeEvent.Param3, 3);
+        }
+        private static void WriteParamToFile(string eventName, byte paramIndex, string eventData)
+        {
+            if (eventData == 0.ToString())
+                return;
+            
+            var fileName = eventName+"_"+paramIndex+".txt";
+            var directory = GetPathNearApp(@"\paramDump");
+            if (!Directory.Exists(directory))
+                Directory.CreateDirectory(directory);
+            var userDictionary = directory+@"\"+fileName;
+            if (File.Exists(userDictionary))
+                using (var file = new StreamReader(path: userDictionary))
+                {
+                    string line;
+                    while ((line = file.ReadLine()) != null)
+                        if (eventData == line)
+                            return;
+                }
+            using (var file = new StreamWriter(path: userDictionary, append: true))
+                file.WriteLine(eventData); //Write them into the user dictionary
         }
     }
 }

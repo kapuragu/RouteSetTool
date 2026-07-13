@@ -56,7 +56,9 @@ namespace RouteSetTool
                 var logName = route.Name.HashValue.ToString();
                 if (route.Name.IsStringKnown)
                     logName = route.Name.StringLiteral;
-                //Console.WriteLine($"@{reader.BaseStream.Position} Route#{routeIndex} Name: {logName}");
+#if DEBUG
+                Console.WriteLine($"@{reader.BaseStream.Position} Route#{routeIndex} Name: {logName}");
+#endif
 
                 uint routeDefinitonsPosition = (uint)(offsetToRouteDefinitions + (routeIndex * 16));
                 //Console.WriteLine($"@{reader.BaseStream.Position} routeDefinitonsPosition: {routeDefinitonsPosition} ");

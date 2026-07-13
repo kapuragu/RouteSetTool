@@ -1,8 +1,10 @@
+
 All
 AttackBurstFire
 AttackFireAAG
 AttackStandFire
 Back
+BreakSteelTower
 CarryHoneyBee
 Caution
 CautionCrawlIdleAim
@@ -30,6 +32,7 @@ CautionWalkAim
 CautionWalkAimFront
 CautionWalkFire
 CautionWalkSearch
+chase
 CloseDoor
 CommonActing
 Conversation
@@ -51,8 +54,10 @@ Hovering
 IdleSearch
 Jump
 JumpOnly
+JumpRun
 JumpWalk
 Kill
+move
 Move
 MoveFast
 MoveNormal
@@ -71,6 +76,8 @@ OpenDoor
 Peep1
 Peep2
 Peep3
+PeepLeft
+PeepRight
 PermitGettingOff
 PermitToGetOff
 PickUpHoneyBee
@@ -96,10 +103,12 @@ RunOnly
 RunWalk
 Salute
 SaluteGreeting
+SaluteThank
 SearchMissile
 SendMessage
 SetTargetSpeed
 SitInChair
+SkullFaceStandByVehicle
 SleepOnSofa
 Snipe
 SquatIdle
@@ -109,6 +118,7 @@ StandIdle
 StandSearch
 StandUseFlashlight
 StandUseSearchlight
+StandWalk
 Stop
 SupineSnipe
 SwitchRoute
@@ -129,6 +139,7 @@ VehicleGetOff
 VehicleGetOffEmergency
 VehicleGetOut
 VehicleIdle
+VehicleKmPerHour
 VehicleMoveFast
 VehicleMoveNormal
 VehicleMoveSlow
@@ -145,6 +156,3 @@ WalkerGearGetOut
 WalkerGearRelaxedIdle
 WalkerGearRelaxedRun
 WalkerGearRelaxedWalk
-chase
-keep
-move
